@@ -3,6 +3,7 @@
 #include <limits.h>
 int mapErr = 0;
 #define MAP_NOSUCH 1
+#define MALLOC_FAIL 2
 typedef struct {
     void* key;
     void* value;
@@ -17,26 +18,39 @@ typedef struct {
     unsigned int length;
     unsigned int occupied;
 } HashMap;
-HashMap* createMap(int length, unsigned int (*hash)(void*), int(*compare)(void*,void*),void (*free)(Entry*)){
+HashMap* createMap(int length, unsigned int (*hash)(void*), int(*compare)(void*,void*),void (*freefn)(Entry*)){
     HashMap* ret = malloc(sizeof(HashMap));
+	if (ret == NULL){
+		mapErr = MALLOC_FAIL;
+		return ret;
+	}
     Entry* entries = malloc(sizeof(Entry) * length);
+		if (entries == NULL){
+			mapErr = MALLOC_FAIL;
+			free(ret);
+			return NULL;
+		}
     // sanitizing data, should be faster than calling calloc().
     for (unsigned int i = 0; i < length; i++){
         entries[i].key = NULL;
     }
     ret->entries = entries;
     ret->hashf = hash;
-    ret->free = free;
+    ret->free = freefn;
     ret->compare = compare;
     ret->length = length;
     ret->occupied = 0;
     return ret;
 }
-/* it is a good idea to rehash a map after altering many entries, since that will most likely alter the hashcode of the object*/
-void rehash(HashMap* map){
+/* it is a good idea to rehash a map after deleting an entry, since that will most likely alter the hashcode of the object*/
+int rehash(HashMap* map){
 	// cannot do in-place, since it will probably collide with things that may move after
     unsigned int j = 0;
 	Entry* newE = malloc(sizeof(Entry)* map->length);
+	if (newE == NULL){
+		mapErr = MALLOC_FAIL;
+		return 1;
+	}
 	for (unsigned int i = 0; i < map->length; i++){
         	newE[i].key = NULL;
    	}
@@ -56,10 +70,15 @@ void rehash(HashMap* map){
     	}
 	free(map->entries);
 	map->entries = newE;
+	return 0;
 }
-void growMap(HashMap* map, unsigned int inc){
+int growMap(HashMap* map, unsigned int inc){
     unsigned int newL = map->length+inc;
     Entry* newE = malloc(sizeof(Entry)* newL);
+		if (newE == NULL){
+			mapErr = MALLOC_FAIL;
+			return 1;
+		}
     // sanitizing data, should be faster than calling calloc().
     for (unsigned int i = 0; i < newL; i++){
         newE[i].key = NULL;
@@ -82,12 +101,20 @@ void growMap(HashMap* map, unsigned int inc){
     free(map->entries);
     map->entries = newE;
     map->length = newL;
+		return 0;
 }
-void addPair(HashMap* map, void* key, void* val){
+int addPair(HashMap* map, void* key, void* val){
     // if (map->occupied > 3 / 4 * map->length)
     if (4 * map->occupied > 3 * map->length-1){
-        //printf("growing map\n");
-        growMap(map, map->length);
+			char rep = 0;
+      while (growMap(map, map->length) && rep < 3){
+				rep++;
+			}
+			if (rep == 3){
+				return 1;
+			} else {
+				mapErr = 0;
+			}
     }
     int index = map->hashf(key) % map->length;
     while (map->entries[index].key != NULL){
@@ -95,18 +122,17 @@ void addPair(HashMap* map, void* key, void* val){
 					map->entries[index].key = key;
     			map->entries[index].value = val;
 					// this should give better order
-					rehash(map);
-					return;
 				}
 				index++;
         if (index == map->length){
             index = 0;
         }	
     }
-    //printf("added key at index %d\n", index);
+			//printf("added key at index %d\n", index);
     map->entries[index].key = key;
     map->entries[index].value = val;
     map->occupied++;
+		return 0;
 }
 unsigned int hasKey(HashMap* map, void* key){
     unsigned int index = map->hashf(key) % map->length;
