@@ -20,8 +20,8 @@ typedef struct {
     unsigned int length;
     unsigned int occupied;
 } HashMap;
-HashMap* createMap(int length, unsigned int (*hash)(void*), int(*compare)(void*,void*),void (*free)(Entry*));
-/* it is a good idea to rehash a map after altering many entries, since that will most likely alter the hashcode of the object*/
+HashMap* createMap(int length, unsigned int (*hash)(void*), int(*compare)(void*,void*),void (*freefn)(Entry*));
+/* it is a good idea to rehash a map after deleting an entry, since that will most likely alter the hashcode of the object*/
 int rehash(HashMap* map);
 int growMap(HashMap* map, unsigned int inc);
 int addPair(HashMap* map, void* key, void* val);

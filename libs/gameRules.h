@@ -6,17 +6,20 @@
 #include <stdint.h>
 #define ROW 1
 #define COL 0
+#define RED_TEAM 1
+#define BLUE_TEAM 2
 //board of all soldiers
 extern int* board;
-extern int red_count;
-extern int blue_count;
+extern int red_ct;
+extern int blue_ct;
 extern int base_ct;
 extern Soldier* red_team;
 extern Soldier* blue_team;
 // returns the soldier at the set coordinates.
 int game_check_at(int x, int y);
 int convert_1d(int x, int y);
-void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count, int cols, int rows);
+void display_update();
+void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count);
 void game_move_to(int p_x, int p_y, int n_x, int n_y);
 void attack_try(Soldier* user, int x_change, int y_change);
 void move_try(Soldier* soldier, int x_change, int y_change);

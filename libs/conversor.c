@@ -461,11 +461,12 @@ Soldier* translate(FILE* read){
 		if ((keyword_code = check_keywords(tokens[0])) != NO_KEYWORD){
 			//printf("keyword code = %d\n", keyword_code); 
 			if (keyword_code == CON_JMP_IND){
-				build_con_jmp(var_map, emul, &tokens[i]);
+				build_con_jmp(var_map, emul, tokens);
 			} else if (keyword_code == JMP_IND){
-				build_jmp(emul, &tokens[i]);
+				build_jmp(emul, tokens);
 			} else if (keyword_code == SOL_ATK_IND){
 				// TODO: atk builder.
+				//build_atk(var_map, emul, tokens);
 			} else if (keyword_code == SOL_MOVE_IND){
 				if (tok_ct != 2){
 					printf("IMPROPER MOVE CALL SYNTAX\n");
