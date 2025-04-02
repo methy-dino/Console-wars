@@ -16,23 +16,26 @@ Soldier* blue_team = NULL;
 // returns the soldier at the set coordinates.
 int game_check_at(int x, int y){
 	//printf("checking index: %d\n", 2+x*board[COL]+y*board[ROW]);
-	return board[2+x+y*board[ROW]];
+	return board[2+x+y*board[COL]];
 }
 int convert_1d(int x, int y){
-	return 2+x+y*board[ROW];
+	return 2+x+y*board[COL];
 }
 void display_update(){
-	for (unsigned int y = 2; y < board[ROW] * board[COL] + 2; y++){
-		if (board[y] != INT_MIN){
-			if (board[y] > 0){
-				//attron(COLOR_PAIR(RED_TEAM));
-				//
+	for (unsigned int y = 0; y < board[ROW]; y++){
+		for (unsigned int x = 0; x < board[COL]; x++){
+			if (board[convert_1d(x,y)] != INT_MIN){
+				if (board[y] > 0){
+					printf("found red at: %d, %d\n",x,y);
+					attron(COLOR_PAIR(RED_TEAM));
+				} else {
+					printf("found blue at: %d, %d\n",x,y);
+					attron(COLOR_PAIR(BLUE_TEAM));
+				}
+				printw("#");
 			} else {
-				//attron(COLOR_PAIR(BLUE_TEAM));
+			 printw(" ");
 			}
-			printw("#");
-		} else {
-		 printw(" ");
 		}
 	}
 	refresh();
@@ -57,12 +60,13 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		exit(0);
 	}
 	board = malloc((COLS * LINES + 2) * sizeof(int));
-	printf("allocated %d ints", COLS * LINES + 2);
+	//printf("allocated %d ints", COLS * LINES + 2);
 	for (int i = 2; i < COLS * LINES + 2; i++){
 		//printf("%d i\n", i);
 		board[i] = INT_MIN;
 		//printf("huh %d\n", i);
 	}
+	printf("COLS: %d LINES: %d", COLS, LINES);
 	board[COL] = COLS;
 	board[ROW] = LINES;
 /*	for (int i = 0; i < board[ROW]; i++){
@@ -105,15 +109,15 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		for (int j = 0; j < side; j++){
 			//places at upper left.
 			//printf("id; %d \n", red_team[count_cp-1].vars[SOL_ID]); 
-			board[convert_1d(col, row)] = red_team[count_cp-1].vars[SOL_ID];
+			board[convert_1d(col, row)] = red_team[count_cp].vars[SOL_ID];
 			red_team[count_cp].vars[SOL_X] = col;
 			red_team[count_cp].vars[SOL_Y] = row;
-		printf("red inset %d\n", convert_1d(row, col)); 
+			//printf("red inset %d with id: %d as index of list number %d\n", convert_1d(row, col), red_team[count_cp].vars[SOL_ID], count_cp); 
 			// places at bottom right.
-			board[convert_1d(board[COL] - col-1, board[ROW]-row-1)] = blue_team[count_cp-1].vars[SOL_ID];
+			board[convert_1d(board[COL] - col-1, board[ROW]-row-1)] = blue_team[count_cp].vars[SOL_ID];
 			blue_team[count_cp].vars[SOL_X] = board[COL]-col;
 			blue_team[count_cp].vars[SOL_Y] = board[ROW]-row;
-		printf("blu inset %d\n", convert_1d(board[COL] - col-1, board[ROW]-row-1));
+			printf("blu inset %d with id: %d as index of list number %d\n", convert_1d(board[COL] - col-1, board[ROW]-row-1), blue_team[count_cp].vars[SOL_ID], count_cp); 
 			count_cp--;
 			col++;
 			if (count_cp == -1){
@@ -124,19 +128,21 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		col = 0;
 		row++;
 	}
-	/*for (int i = 0; i < board[ROW]; i++){
-		printf("[");
+	for (int i = 0; i < board[ROW]; i++){
+		//printf("[");
 		for (int j = 0; j < board[COL]; j++){
-			printf(" %d,", game_check_at(j,i));
+			if (game_check_at(j,i) != INT_MIN){
+				printf("ID FOUND %d at index %d\n", game_check_at(j,i), convert_1d(j,i));
+			}
 		}
-		printf("]\n");
-	}*/
+	//	printf("]\n");
+	}
 	//printf("]\n");
 	//initscr();
-	//start_color();
-	//init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
-	//init_pair(BLUE_TEAM, COLOR_BLUE, COLOR_BLACK);
-	//noecho();
+	start_color();
+	init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
+	init_pair(BLUE_TEAM, COLOR_BLUE, COLOR_BLACK);
+	noecho();
 	printf("starting display\n");
 	display_update();
 }
