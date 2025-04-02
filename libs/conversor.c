@@ -55,21 +55,21 @@ void CMP(Soldier* soldier, void* args){
 	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	int ret = 0;
-	printf("comparison: %d %d\n", numa, numb);
+	//	printf("comparison: %d %d\n", numa, numb);
 	//printf("results: %d %d %d\n",convert->comparison & EQUAL, convert->comparison & SMALLER, convert->comparison & BIGGER);	
 	if (convert->comparison & EQUAL > 0){
-		printf("equality check\n");
+		//printf("equality check\n");
 		ret = numa==numb;
 	}
 	if (ret == 0 && (convert->comparison & SMALLER) > 0){
-		printf("lesser check\n");
+		//printf("lesser check\n");
 		ret = numa<numb;
 	}
 	if (ret == 0 && convert->comparison & BIGGER > 0){
-		printf("greater check\n");
+		//printf("greater check\n");
 		ret = numa>numb;
 	}
-	printf("comparison result: %d\n", ret);
+	//printf("comparison result: %d\n", ret);
 	soldier->vars[TMP_RET] = ret;
 }
 void JMP(Soldier* soldier, void* args){
@@ -92,10 +92,13 @@ void CHECK(Soldier* soldier, void* args){
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
-		int move_dir = convert->arg_mode == DATA_PTR ? convert->arg : soldier->curr;
+		int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
+	fprintf(stderr, "movedir is: %d\n", move_dir);
 	char moveY = (move_dir == 0) - (move_dir == 2);
 	char moveX = (move_dir == 1) - (move_dir == 3);
+	fprintf(stderr, "move try by %d X, %d Y\n", moveX, moveY);
 	move_try(soldier, moveX, moveY); 
 }
 void RAND(Soldier* soldier, void* args){
@@ -275,7 +278,7 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
 	}
-	printf("cmp arg 1 done\n");
+//	printf("cmp arg 1 done\n");
 	unsigned char mode = '\0';
 	if (tokens[3][0] == '='){
 		mode = mode | EQUAL;
@@ -284,7 +287,7 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 	} else if (tokens[3][0] == '<'){
 		mode = mode | SMALLER;
 	}
-	printf("mode %d \n", mode);
+	//printf("mode %d \n", mode);
 	if (tokens[3][1] != '\0'){
 		if (tokens[3][1] == '='){
 			mode = mode | EQUAL;
@@ -294,8 +297,8 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 			mode = mode | SMALLER;
 		}
 	}
-printf("mode %d \n", mode);
-	printf("cmp comparison done.\n");
+//printf("mode %d \n", mode);
+	//printf("cmp comparison done.\n");
 	((CMP_ARGS*)cmp.args)->comparison = mode;
 	if (!(tokens[4][0] < '0' || tokens[4][0] > '9')){
 		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[4], NULL, 10);
@@ -324,6 +327,21 @@ void build_jmp(Soldier* emul, char** tokens){
 	emul->instructions[emul->instruction_total] = jmp;
 	emul->instruction_total++;
 }
+	void build_move(Soldier* emul, char** tokens, HashMap* vars){
+	Instruction move = (Instruction) {NULL, SOL_MOVE_IND};
+	move.args = malloc(sizeof(ONE_ARG));
+	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
+		((ONE_ARG*)move.args)->arg_mode = DATA_PTR;
+		((ONE_ARG*)move.args)->arg = *(int*)getValue(vars, tokens[1]);
+	} else {
+		((ONE_ARG*)move.args)->arg_mode = RAW_DATA;
+		((ONE_ARG*)move.args)->arg = strtoimax(tokens[1], NULL, 10);
+		fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
+	}
+	emul->instructions[emul->instruction_total] = move;
+	emul->instruction_total++;
+}
+
 unsigned char priority(char* math_sym){
 	if (math_sym[0] == '+' || math_sym[0] == '-'){
 		return 1;
@@ -473,6 +491,7 @@ Soldier* translate(FILE* read){
 					exit(0);
 				}
 				//TODO: move builder.
+				build_move(emul, tokens, var_map);
 			} else if (keyword_code == DECLARATION){
 					printf("var declared\n");	
 						//printf("%d \n", strlen(); 
@@ -567,19 +586,19 @@ Soldier* translate(FILE* read){
 
 		free(tokens);
 	}
-	printf("compiled to %d instructions: \n", emul->instruction_total);
+	fprintf(stderr, "compiled to %d instructions: \n", emul->instruction_total);
 	for (int i = 0; i < emul->instruction_total; i++){
 		if (emul->instructions[i].instruction_id == JMP_IND || emul->instructions[i].instruction_id == CON_JMP_IND){
 			((ONE_ARG*)emul->instructions[i].args)->arg = line_relation[((ONE_ARG*)emul->instructions[i].args)->arg]-1;
 		}
-		printf("%dth - ID: %d \n", i, emul->instructions[i].instruction_id);
+		fprintf(stderr, "%dth - ID: %d \n", i, emul->instructions[i].instruction_id);
 	}
 	for (int i = 0; i < 32; i++){
 		emul->vars[i] = 0;
 	}
 	emul->curr = -1;
 	discardMap(var_map);
-	fclose(read);
+	//fclose(read);
 	return emul;
 }
 void RUN(Soldier* soldier){
@@ -588,12 +607,12 @@ void RUN(Soldier* soldier){
 		return;
 	}
 	soldier->curr++;
-	printf("running instruction number %d\n", soldier->curr);
+	//printf("running instruction number %d\n", soldier->curr);
 	instructions[soldier->instructions[soldier->curr].instruction_id](soldier, soldier->instructions[soldier->curr].args);	
-	printf("variable state: \n[");
-	for (int i = 0; i < 32; i++){
-	printf("%d, ", soldier->vars[i]);
-	}
-	printf("]\n");
-	printf("%d %d comparisons\n", EQUAL | BIGGER, EQUAL | SMALLER);
+	//printf("variable state: \n[");
+	//for (int i = 0; i < 32; i++){
+	//printf("%d, ", soldier->vars[i]);
+	//}
+	//printf("]\n");
+	//printf("%d %d comparisons\n", EQUAL | BIGGER, EQUAL | SMALLER);
 }
