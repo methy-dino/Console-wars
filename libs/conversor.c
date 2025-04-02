@@ -89,17 +89,23 @@ void SOL_ATK(Soldier* soldier, void* args){
 	attack_try(soldier, moveX, moveY); 
 }
 void CHECK(Soldier* soldier, void* args){
+	TWO_ARGS* convert = (TWO_ARGS*) args;
+	int x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int result = game_check_at(x, y);
+	// same team returns 0, empty returns -1, diff team returns 1. 
+	soldier->vars[TMP_RET] = ((soldier->vars[SOL_ID] > 0 && result > 0) || (soldier->vars[SOL_ID] < 0 && result > INT_MIN && result < 0)) - (result == INT_MIN || result == 0);
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
 		int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
-	fprintf(stderr, "movedir is: %d\n", move_dir);
+	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
-	fprintf(stderr, "movedir is: %d\n", move_dir);
+	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	char moveY = (move_dir == 0) - (move_dir == 2);
 	char moveX = (move_dir == 1) - (move_dir == 3);
-	fprintf(stderr, "move try by %d X, %d Y\n", moveX, moveY);
-	move_try(soldier, moveX, moveY); 
+	//fprintf(stderr, "move try by %d X, %d Y\n", moveX, moveY);
+	soldier->vars[TMP_RET] = move_try(soldier, moveX, moveY); 
 }
 void RAND(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
@@ -153,7 +159,7 @@ void MOD(Soldier* soldier, void* args){
 #define MOD_IND 12
 #define DECLARATION 200
 #define NO_KEYWORD 201
-void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD};
+void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD, };
 int strcmp_wrap(void* a, void* b){
 	if (a == NULL || b == NULL){
 		return 1;
@@ -168,7 +174,7 @@ unsigned char check_keywords(char* buff){
 	if (strcmp("MOVE", buff + i) == 0){
 		return SOL_MOVE_IND;
 	} else if (strcmp("SEEK", buff + i) == 0){
-		return NO_KEYWORD;//SEEK_IND;
+		//return SEEK_IND;
 	} else if (strcmp("GOTO", buff + i) == 0){
 		return JMP_IND;
 	} else if (strcmp("ATTACK", buff + i) == 0){
@@ -327,7 +333,7 @@ void build_jmp(Soldier* emul, char** tokens){
 	emul->instructions[emul->instruction_total] = jmp;
 	emul->instruction_total++;
 }
-	void build_move(Soldier* emul, char** tokens, HashMap* vars){
+void build_move(Soldier* emul, char** tokens, HashMap* vars){
 	Instruction move = (Instruction) {NULL, SOL_MOVE_IND};
 	move.args = malloc(sizeof(ONE_ARG));
 	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
@@ -336,12 +342,25 @@ void build_jmp(Soldier* emul, char** tokens){
 	} else {
 		((ONE_ARG*)move.args)->arg_mode = RAW_DATA;
 		((ONE_ARG*)move.args)->arg = strtoimax(tokens[1], NULL, 10);
-		fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
+		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
 	}
 	emul->instructions[emul->instruction_total] = move;
 	emul->instruction_total++;
 }
-
+void build_atk(Soldier* emul, char** tokens, HashMap* vars){
+	Instruction atk = (Instruction) {NULL, SOL_ATK_IND};
+	atk.args = malloc(sizeof(ONE_ARG));
+	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
+		((ONE_ARG*)atk.args)->arg_mode = DATA_PTR;
+		((ONE_ARG*)atk.args)->arg = *(int*)getValue(vars, tokens[1]);
+	} else {
+		((ONE_ARG*)atk.args)->arg_mode = RAW_DATA;
+		((ONE_ARG*)atk.args)->arg = strtoimax(tokens[1], NULL, 10);
+		//fprintf(stderr, "got %d as atk arg", ((ONE_ARG*)move.args)->arg);
+	}
+	emul->instructions[emul->instruction_total] = atk;
+	emul->instruction_total++;
+}
 unsigned char priority(char* math_sym){
 	if (math_sym[0] == '+' || math_sym[0] == '-'){
 		return 1;
@@ -465,7 +484,6 @@ Soldier* translate(FILE* read){
 	HashMap* var_map = createMap(16, &strHash, &strcmp_wrap, &defaultFree);
 	while (fgets(buff, 1024, read) != NULL){
 		line_relation[curr_line] = emul->instruction_total;
-		printf("loop!\n");
 		curr_line++;
 		// skip white space.
 		unsigned char tok_ct = 0;
@@ -483,14 +501,17 @@ Soldier* translate(FILE* read){
 			} else if (keyword_code == JMP_IND){
 				build_jmp(emul, tokens);
 			} else if (keyword_code == SOL_ATK_IND){
-				// TODO: atk builder.
-				//build_atk(var_map, emul, tokens);
-			} else if (keyword_code == SOL_MOVE_IND){
 				if (tok_ct != 2){
-					printf("IMPROPER MOVE CALL SYNTAX\n");
+					fprintf(stderr, "IMPROPER ATTACK CALL SYNTAX\n");
 					exit(0);
 				}
-				//TODO: move builder.
+				build_atk(emul, tokens, var_map);
+			} else if (keyword_code == SOL_MOVE_IND){
+				if (tok_ct != 2){
+					fprintf(stderr, "IMPROPER MOVE CALL SYNTAX\n");
+					exit(0);
+				}
+				//DONE: move builder.
 				build_move(emul, tokens, var_map);
 			} else if (keyword_code == DECLARATION){
 					printf("var declared\n");	
@@ -505,7 +526,7 @@ Soldier* translate(FILE* read){
 //printf("test\n");
 				if (tok_ct > 2){
 					if (strcmp(tokens[2], "=")){
-						printf("INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
+						fprintf(stderr, "INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
 					}
 					if (tok_ct > 3) {
@@ -534,11 +555,35 @@ Soldier* translate(FILE* read){
 					}
 			if (tok_ct > 3) {
 				if ((keyword_code = check_keywords(tokens[2])) != NO_KEYWORD){
+					TWO_ARGS* args;
 					switch (keyword_code){
 						case RAND_IND:
 							build_rand(var_map, emul, &tokens[2]);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
-							TWO_ARGS* args= malloc(sizeof(TWO_ARGS));
+							args = malloc(sizeof(TWO_ARGS));
+							args->arg1_mode = DATA_PTR;
+							args->arg1 = curr_var[0];
+							args->arg2_mode = DATA_PTR;
+							args->arg2 = TMP_RET;
+							emul->instructions[emul->instruction_total].args = args;
+							emul->instruction_total++;
+							break;
+						case CHECK_IND:
+							//TODO: IMPLEMENT CHECK
+							//build_check(var_map, emul, &tokens[2]);
+							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
+							args= malloc(sizeof(TWO_ARGS));
+							args->arg1_mode = DATA_PTR;
+							args->arg1 = curr_var[0];
+							args->arg2_mode = DATA_PTR;
+							args->arg2 = TMP_RET;
+							emul->instructions[emul->instruction_total].args = args;
+							emul->instruction_total++;
+							break;
+						case SOL_MOVE_IND:
+							build_move(emul, &tokens[2], var_map);
+							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
+							args= malloc(sizeof(TWO_ARGS));
 							args->arg1_mode = DATA_PTR;
 							args->arg1 = curr_var[0];
 							args->arg2_mode = DATA_PTR;

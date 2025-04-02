@@ -119,7 +119,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 			board[convert_1d(board[COL] - col-1, board[ROW]-row-1)] = blue_team[count_cp].vars[SOL_ID];
 			blue_team[count_cp].vars[SOL_X] = board[COL]-col-1;
 			blue_team[count_cp].vars[SOL_Y] = board[ROW]-row-1;
-			printf("blu inset %d with id: %d as index of list number %d\n", convert_1d(board[COL] - col-1, board[ROW]-row-1), blue_team[count_cp].vars[SOL_ID], count_cp); 
+			//printf("blu inset %d with id: %d as index of list number %d\n", convert_1d(board[COL] - col-1, board[ROW]-row-1), blue_team[count_cp].vars[SOL_ID], count_cp); 
 			count_cp--;
 			col++;
 			if (count_cp == -1){
@@ -130,7 +130,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		col = 0;
 		row++;
 	}
-	for (int i = 0; i < board[ROW]; i++){
+	/*for (int i = 0; i < board[ROW]; i++){
 		//printf("[");
 		for (int j = 0; j < board[COL]; j++){
 			if (game_check_at(j,i) != INT_MIN){
@@ -138,7 +138,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 			}
 		}
 	//	printf("]\n");
-	}
+	}*/
 	//printf("]\n");
 	//initscr();
 	start_color();
@@ -155,7 +155,7 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	board[convert_1d(n_x, n_y)] = id;
 	target->vars[SOL_X] = n_x;
 	target->vars[SOL_Y] = n_y;
-	fprintf(stderr, "moved from X:%d Y:%d to X:%d Y:%d\n", p_x, p_y, n_x, n_y);
+	//fprintf(stderr, "moved from X:%d Y:%d to X:%d Y:%d\n", p_x, p_y, n_x, n_y);
 }
 void attack_try(Soldier* user, int x_change, int y_change){
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
@@ -178,22 +178,23 @@ void attack_try(Soldier* user, int x_change, int y_change){
 		blue_ct--;
 	}
 }
-void move_try(Soldier* soldier, int x_change, int y_change){
-	fprintf(stderr, "%d %d %d %d max check !! \n", soldier->vars[SOL_X] + x_change, board[COL], soldier->vars[SOL_Y] + y_change, board[ROW]);
+int move_try(Soldier* soldier, int x_change, int y_change){
+	//fprintf(stderr, "%d %d %d %d max check !! \n", soldier->vars[SOL_X] + x_change, board[COL], soldier->vars[SOL_Y] + y_change, board[ROW]);
 	if (soldier->vars[SOL_X] + x_change >= board[COL] || soldier->vars[SOL_Y] + y_change >= board[ROW]){
-		fprintf(stderr, "move try failed, out of bounds (+)\n");
-	return;
+		//fprintf(stderr, "move try failed, out of bounds (+)\n");
+		return 1;
 	}
 	if (soldier->vars[SOL_X] + x_change < 0 || soldier->vars[SOL_Y] + y_change < 0){
-		fprintf(stderr, "move try failed, out of bounds (-)\n");
-		return;
+		//fprintf(stderr, "move try failed, out of bounds (-)\n");
+		return 1;
 	}
 	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change); 
 	if (results != INT_MIN){
-		fprintf(stderr, "move try failed, space occupied\n");
-		return;
+		//fprintf(stderr, "move try failed, space occupied\n");
+		return 1;
 	}
 	game_move_to(soldier->vars[SOL_X], soldier->vars[SOL_Y], soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change, soldier);
+	return 0;
 }
 void game_step(char quantity){
 	for (char i = 0; i < quantity; i++){
