@@ -82,11 +82,13 @@ void CON_JMP(Soldier* soldier, void* args){
 }
 void SOL_ATK(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
-	int move_dir = convert->arg_mode == DATA_PTR ? convert->arg : soldier->curr;
+	int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
+	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	char moveY = (move_dir == 0) - (move_dir == 2);
 	char moveX = (move_dir == 1) - (move_dir == 3);
-	attack_try(soldier, moveX, moveY); 
+	attack_try(soldier, moveX, moveY);
 }
 void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;

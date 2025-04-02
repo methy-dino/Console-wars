@@ -7,11 +7,14 @@
 #define COL 0
 #define RED_TEAM 1
 #define BLUE_TEAM 2
+#define ATK_COL 3
 //board of all soldiers
 int* board = NULL;
 int red_ct = 0;
 int blue_ct = 0;
 int base_ct = 0;
+int* atk_tiles;
+int atk_ct;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
 // returns the soldier at the set coordinates.
@@ -27,19 +30,28 @@ void display_update(){
 	for (unsigned int y = 0; y < board[ROW]; y++){
 		for (unsigned int x = 0; x < board[COL]; x++){
 			if (board[convert_1d(x,y)] != INT_MIN){
-				if (board[convert_1d(x,y)] > 0){
-					//printf("found red at: %d, %d\n",x,y);
-					attron(COLOR_PAIR(RED_TEAM));
-				} else {
-					//printf("found blue at: %d, %d\n",x,y);
-					attron(COLOR_PAIR(BLUE_TEAM));
+				if (board[convert_1d(x,y)] == 0){
+					attron(COLOR_PAIR(ATK_COL));
+					printw("~");
+				} else { 
+					if (board[convert_1d(x,y)] > 0){
+						//printf("found red at: %d, %d\n",x,y);
+						attron(COLOR_PAIR(RED_TEAM));
+					} else {
+						//printf("found blue at: %d, %d\n",x,y);
+						attron(COLOR_PAIR(BLUE_TEAM));
+					}
+					printw("#");
 				}
-				printw("#");
 			} else {
 			 printw(" ");
 			}
 		}
 	}
+	for (int i = 0; i < atk_ct; i++){
+		board[atk_tiles[i]] = INT_MIN;	
+	}
+	atk_ct=0;
 	refresh();
 }
 void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count){
@@ -84,6 +96,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		side++;
 	}
 	//printf("starting soldier creation\n");
+	atk_tiles = malloc(sizeof(int) * soldier_count * 2);
 	red_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
     //printf("allocated: %d bytes", 
 	blue_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
@@ -144,6 +157,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	start_color();
 	init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
 	init_pair(BLUE_TEAM, COLOR_BLUE, COLOR_BLACK);
+	init_pair(ATK_COL, COLOR_WHITE, COLOR_BLACK);
 	noecho();
 	curs_set(0);
 	printf("starting display\n");
@@ -158,6 +172,7 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	//fprintf(stderr, "moved from X:%d Y:%d to X:%d Y:%d\n", p_x, p_y, n_x, n_y);
 }
 void attack_try(Soldier* user, int x_change, int y_change){
+	fprintf(stderr, "attack attempt\n");
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
 		return;
 	}
@@ -165,16 +180,17 @@ void attack_try(Soldier* user, int x_change, int y_change){
 		return;
 	}
 	int results = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
-	if (results == INT_MIN){
+		board[convert_1d(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change)] = 0;
+	atk_tiles[atk_ct] = convert_1d(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
+	atk_ct++;
+	if (results == INT_MIN || results == 0){
 		return;
 	}
 	if (results > 0){
 		red_team[results-1].curr = -2;
-		board[convert_1d(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change)] = INT_MIN;
 		red_ct--;
 	} else {
-		blue_team[-(results-1)].curr = -2;
-		board[convert_1d(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change)] = INT_MIN;
+		blue_team[-(results+1)].curr = -2;
 		blue_ct--;
 	}
 }
