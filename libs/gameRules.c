@@ -145,6 +145,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
 	init_pair(BLUE_TEAM, COLOR_BLUE, COLOR_BLACK);
 	noecho();
+	curs_set(0);
 	printf("starting display\n");
 	display_update();
 }
