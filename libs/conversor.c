@@ -57,7 +57,7 @@ void CMP(Soldier* soldier, void* args){
 	int ret = 0;
 	//	printf("comparison: %d %d\n", numa, numb);
 	//printf("results: %d %d %d\n",convert->comparison & EQUAL, convert->comparison & SMALLER, convert->comparison & BIGGER);	
-	if (convert->comparison & EQUAL > 0){
+	if ((convert->comparison & EQUAL) > 0){
 		//printf("equality check\n");
 		ret = numa==numb;
 	}
@@ -65,8 +65,8 @@ void CMP(Soldier* soldier, void* args){
 		//printf("lesser check\n");
 		ret = numa<numb;
 	}
-	if (ret == 0 && convert->comparison & BIGGER > 0){
-		//printf("greater check\n");
+	if (ret == 0 && (convert->comparison & BIGGER) > 0){
+		//fprintf(stderr, "greater check\n");
 		ret = numa>numb;
 	}
 	//printf("comparison result: %d\n", ret);
@@ -324,6 +324,7 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 			mode = mode | SMALLER;
 		}
 	}
+	fprintf(stderr, "mode: %d\n", mode);
 	curr_i++;
 //printf("mode %d \n", mode);
 	//printf("cmp comparison done.\n");
