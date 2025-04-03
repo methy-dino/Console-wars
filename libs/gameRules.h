@@ -19,6 +19,7 @@ extern Soldier* blue_team;
 int game_check_at(int x, int y);
 int convert_1d(int x, int y);
 void display_update();
+void seek_try(Soldier* soldier, int ptrX, int ptrY);
 void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count);
 void game_move_to(int p_x, int p_y, int n_x, int n_y);
 void attack_try(Soldier* user, int x_change, int y_change);

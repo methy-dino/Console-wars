@@ -172,7 +172,7 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	//fprintf(stderr, "moved from X:%d Y:%d to X:%d Y:%d\n", p_x, p_y, n_x, n_y);
 }
 void attack_try(Soldier* user, int x_change, int y_change){
-	fprintf(stderr, "attack attempt\n");
+	//fprintf(stderr, "attack attempt\n");
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
 		return;
 	}
@@ -192,6 +192,96 @@ void attack_try(Soldier* user, int x_change, int y_change){
 	} else {
 		blue_team[-(results+1)].curr = -2;
 		blue_ct--;
+	}
+	if (red_ct == 0){
+			endwin();
+			exit(0);
+	}
+	if (blue_ct == 0){
+			endwin();
+			exit(0);
+	}
+}
+void seek_try(Soldier* soldier, int ptrX, int ptrY){
+	int x = soldier->vars[SOL_X];
+	int tmp_x = 0;
+	int y = soldier->vars[SOL_Y];
+	int tmp_y = 0;
+	int length = 0;
+	// 0 for blue, 1 for red
+	int team = soldier->vars[SOL_ID] > 0;
+	int result = game_check_at(x,y);
+	// THIS SHOULD BE GRANTED TO RETURN, AND NOT RUN AFTER A TEAM DIES.
+	while (1){
+		// DONE DIAGONALS.
+		// ADD ONE TO X TO ACESS NEXT DIAGONAL.
+		x++;
+		length++;
+		//DOWN LEFT
+		if (!(x >= board[COL] || y >= board[ROW] || x < 0 || y < 0)){
+			int result = game_check_at(x,y);
+		}
+		if (((result == INT_MIN || (result > 0) == team)) && result != 0){
+			soldier->vars[ptrX] = x;
+			soldier->vars[ptrY] = y;
+			return;
+		}
+		for (int i = 0; i < length; i++){
+			x--;
+			y--;
+			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
+				continue;
+			}
+			int result = game_check_at(x,y);
+			if (((result == INT_MIN || (result > 0) == team)) && result != 0){
+				soldier->vars[ptrX] = x;
+				soldier->vars[ptrY] = y;
+				return;
+			}
+		}
+		// UP LEFT
+		for (int i = 0; i < length; i++){
+			x--;
+			y++;
+			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
+				continue;
+			}
+			int result = game_check_at(x,y);
+			if (((result == INT_MIN || (result > 0) == team)) && result != 0){
+				soldier->vars[ptrX] = x;
+				soldier->vars[ptrY] = y;
+				return;
+			}
+		}
+		// UP RIGHT
+		for (int i = 0; i < length; i++){
+			x++;
+			y++;
+			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
+				continue;
+			}
+			int result = game_check_at(x,y);
+			if (((result == INT_MIN || (result > 0) == team)) && result != 0){
+				soldier->vars[ptrX] = x;
+				soldier->vars[ptrY] = y;
+				return;
+			}
+		}
+		//DOWN RIGHT
+		for (int i = 0; i < length; i++){
+			x++;
+			y--;
+			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
+				continue;
+			}
+			int result = game_check_at(x,y);
+			if (((result == INT_MIN || (result > 0) == team)) && result != 0){
+				soldier->vars[ptrX] = x;
+				soldier->vars[ptrY] = y;
+				return;
+			}
+		}
+		// UP TO NEXT CYCLE
 	}
 }
 int move_try(Soldier* soldier, int x_change, int y_change){
@@ -224,14 +314,6 @@ void game_step(char quantity){
 void game_loop(){
 	while(1){
 		usleep(100000);
-		game_step(1);
-		if (red_ct == 0){
-			endwin();
-			break;
-		}
-		if (blue_ct == 0){
-			endwin();
-			break;
-		}
+		game_step(1);	
 	}
 }

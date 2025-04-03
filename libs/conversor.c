@@ -146,6 +146,12 @@ void MOD(Soldier* soldier, void* args){
 	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	soldier->vars[TMP_MATH] = numa%numb;
 }
+void SEEK(Soldier* soldier, void* args){
+	TWO_ARGS* convert = (TWO_ARGS*) args;
+	int x = convert->arg1;
+	int y = convert->arg2;
+	seek_try(soldier,x,y);
+}
 #define MEM_CP_IND 0
 #define CMP_IND 1
 #define JMP_IND 2
@@ -159,9 +165,10 @@ void MOD(Soldier* soldier, void* args){
 #define MUL_IND 10
 #define DIV_IND 11
 #define MOD_IND 12
+#define SEEK_IND 13
 #define DECLARATION 200
 #define NO_KEYWORD 201
-void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD, };
+void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD, &SEEK};
 int strcmp_wrap(void* a, void* b){
 	if (a == NULL || b == NULL){
 		return 1;
@@ -176,7 +183,7 @@ unsigned char check_keywords(char* buff){
 	if (strcmp("MOVE", buff + i) == 0){
 		return SOL_MOVE_IND;
 	} else if (strcmp("SEEK", buff + i) == 0){
-		//return SEEK_IND;
+		return SEEK_IND;
 	} else if (strcmp("GOTO", buff + i) == 0){
 		return JMP_IND;
 	} else if (strcmp("ATTACK", buff + i) == 0){
@@ -363,6 +370,14 @@ void build_atk(Soldier* emul, char** tokens, HashMap* vars){
 	emul->instructions[emul->instruction_total] = atk;
 	emul->instruction_total++;
 }
+void build_seek(Soldier* emul, char** tokens, HashMap* vars){
+	Instruction seek = (Instruction) {NULL, SEEK_IND};
+	seek.args = malloc(sizeof(TWO_ARGS));
+	((TWO_ARGS*)seek.args)->arg1_mode = DATA_PTR;
+	((TWO_ARGS*)seek.args)->arg2_mode = DATA_PTR;
+	((TWO_ARGS*)seek.args)->arg1 = *(int*)getValue(vars, tokens[1]);
+	((TWO_ARGS*)seek.args)->arg2 = *(int*)getValue(vars, tokens[2]);
+}
 unsigned char priority(char* math_sym){
 	if (math_sym[0] == '+' || math_sym[0] == '-'){
 		return 1;
@@ -516,7 +531,7 @@ Soldier* translate(FILE* read){
 				//DONE: move builder.
 				build_move(emul, tokens, var_map);
 			} else if (keyword_code == DECLARATION){
-					printf("var declared\n");	
+					//printf("var declared\n");	
 						//printf("%d \n", strlen(); 
 					char* var_name = (char*) malloc(strlen(tokens[1]) + 1);
 //printf("test\n");
@@ -549,6 +564,8 @@ Soldier* translate(FILE* read){
 					}
 				}
 			}
+		} else if (keyword_code == SEEK_IND){
+			build_seek(emul, tokens, var_map);
 		} else if ((curr_var = getValue(var_map, tokens[i])) != NULL){
 			printf("variable match\n");
 			if (strcmp(tokens[1], "=")){
