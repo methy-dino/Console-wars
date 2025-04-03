@@ -279,48 +279,67 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 		printf("CON_GOTO malformed, argument 1 is NOT A NUMBER!\n");
 		exit(0);
 	}
+	int curr_i = 1;
 	jmp.args = malloc(sizeof(ONE_ARG));
+	if (tokens[curr_i][0] == '-'){
+		fprintf(stderr, "CON GOTO WITH NEGATIVE INDEX\n");
+		exit(0);
+	}
 	((ONE_ARG*)jmp.args)->arg_mode = RAW_DATA;
-	((ONE_ARG*)jmp.args)->arg = strtoimax(tokens[1], NULL, 10);
+	((ONE_ARG*)jmp.args)->arg = strtoimax(tokens[curr_i], NULL, 10);
+	curr_i++;
 	cmp.args = malloc(sizeof(CMP_ARGS));
-	if ((var = (int*) getValue(var_mp, tokens[2])) != NULL){
+	if ((var = (int*) getValue(var_mp, tokens[curr_i])) != NULL){
 		((CMP_ARGS*)cmp.args)->arg1 = *var;
-		((CMP_ARGS*)cmp.args)->arg1_mode = DATA_PTR; 
-	} else if (!(tokens[2][0] < '0' || tokens[2][0] > '9')){
-		((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[2], NULL, 10);
+		((CMP_ARGS*)cmp.args)->arg1_mode = DATA_PTR;
+		curr_i++;
+	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+		((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
+		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
+		curr_i++;
+	} else if ((tokens[curr_i+1][0] > '0' - 1 && tokens[curr_i+1][0] < '9' + 1) && tokens[curr_i][0] == '-') {
+		((CMP_ARGS*)cmp.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
 		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA; 
+		curr_i += 2;
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
 	}
 //	printf("cmp arg 1 done\n");
 	unsigned char mode = '\0';
-	if (tokens[3][0] == '='){
+	if (tokens[curr_i][0] == '='){
 		mode = mode | EQUAL;
-	} else if (tokens[3][0] == '>'){
+	} else if (tokens[curr_i][0] == '>'){
 		mode = mode | BIGGER;
-	} else if (tokens[3][0] == '<'){
+	} else if (tokens[curr_i][0] == '<'){
 		mode = mode | SMALLER;
 	}
 	//printf("mode %d \n", mode);
-	if (tokens[3][1] != '\0'){
-		if (tokens[3][1] == '='){
+	if (tokens[curr_i][1] != '\0'){
+		if (tokens[curr_i][1] == '='){
 			mode = mode | EQUAL;
-		}	else if (tokens[3][1] == '>'){
+		}	else if (tokens[curr_i][1] == '>'){
 			mode = mode | BIGGER;
-		} else if (tokens[3][1] == '<'){
+		} else if (tokens[curr_i][1] == '<'){
 			mode = mode | SMALLER;
 		}
 	}
+	curr_i++;
 //printf("mode %d \n", mode);
 	//printf("cmp comparison done.\n");
 	((CMP_ARGS*)cmp.args)->comparison = mode;
-	if (!(tokens[4][0] < '0' || tokens[4][0] > '9')){
-		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[4], NULL, 10);
-		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA; 
-	} else if ((var = (int*) getValue(var_mp, tokens[4])) != NULL){
+	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
+		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
+		curr_i++;
+	} else if ((var = (int*) getValue(var_mp, tokens[curr_i])) != NULL){
 		((CMP_ARGS*)cmp.args)->arg2 = *var;
-		((CMP_ARGS*)cmp.args)->arg2_mode = DATA_PTR; 
+		((CMP_ARGS*)cmp.args)->arg2_mode = DATA_PTR;
+		curr_i++;
+	} else if ((tokens[curr_i+1][0] > '0' - 1 && tokens[curr_i+1][0] < '9' + 1) && tokens[curr_i][0] == '-') {
+		((CMP_ARGS*)cmp.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
+		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
+		curr_i+=2;
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
@@ -499,6 +518,37 @@ Soldier* translate(FILE* read){
 	int* curr_var = NULL;
 	unsigned char keyword_code = NO_KEYWORD;
 	HashMap* var_map = createMap(16, &strHash, &strcmp_wrap, &defaultFree);
+	//ADDING MAGIC MEMORY SPACES.
+	char* var_name = (char*) malloc(8);
+	memcpy(var_name, "TMP_RET", 8);
+	int* var_val = malloc(sizeof(int));
+	var_val[0] = 0;
+	addPair(var_map, var_name, var_val);
+	var_name = (char*) malloc(9);
+	memcpy(var_name, "TMP_MATH", 9);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = 1;
+	addPair(var_map, var_name, var_val);
+	var_name = (char*) malloc(6);
+	memcpy(var_name, "SOL_X", 6);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = 2;
+	addPair(var_map, var_name, var_val);
+	var_name = (char*) malloc(6);
+	memcpy(var_name, "SOL_Y", 6);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = 3;
+	addPair(var_map, var_name, var_val);
+	var_name = (char*) malloc(9);
+	memcpy(var_name, "SOL_STAT", 9);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = 4;
+	addPair(var_map, var_name, var_val);
+	var_name = (char*) malloc(7);
+	memcpy(var_name, "SOL_ID", 7);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = 5;
+	addPair(var_map, var_name, var_val);
 	while (fgets(buff, 1024, read) != NULL){
 		line_relation[curr_line] = emul->instruction_total;
 		curr_line++;
@@ -572,6 +622,9 @@ Soldier* translate(FILE* read){
 						printf("INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
 					}
+			if (curr_var[0] < 5){
+			fprintf(stderr, "ATTEMPTED TO MODIFY READ ONLY VARIABLE!\n");
+			}
 			if (tok_ct > 3) {
 				if ((keyword_code = check_keywords(tokens[2])) != NO_KEYWORD){
 					TWO_ARGS* args;
@@ -621,7 +674,7 @@ Soldier* translate(FILE* read){
 				args->arg1_mode = DATA_PTR;
 				args->arg1 = curr_var[0];
 				args->arg2_mode = DATA_PTR;
-				args->arg2 = TMP_MATH;
+				args->arg2 = TMP_MATH;	
 				emul->instructions[emul->instruction_total].args = args;
 				emul->instruction_total++;
 			}
