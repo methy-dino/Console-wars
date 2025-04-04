@@ -94,8 +94,9 @@ void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
 	int x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
-	// same team returns 1, empty returns 0, diff team returns 1. 
+	// same team returns 1, empty returns 0, diff team returns -1. 
 	soldier->vars[TMP_RET] = check_try(soldier, x, y);
+	//fprintf(stderr, "CHECK RETURNED %d\n", soldier->vars[TMP_RET]);
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;

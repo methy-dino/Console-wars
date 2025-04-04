@@ -328,7 +328,7 @@ void game_step(char quantity){
 }
 void game_loop(){
 	while(1){
-		usleep(100000);
+		usleep(40000);
 		game_step(1);	
 	}
 }
