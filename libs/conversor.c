@@ -198,6 +198,7 @@ unsigned char check_keywords(char* buff){
 	return NO_KEYWORD;
 }
 char is_math(char* str){
+
 	return (str[0] == '*' || str[0] == '/' || str[0] == '+' || str[0] =='-' || str[0] == '%');
 }
 char is_comparator(char* str){
@@ -206,11 +207,13 @@ char is_comparator(char* str){
 char** tokenize(char* raw, unsigned char* token_count){
 	unsigned int prev = 0;
 	unsigned int curr = 0;
+	char last_sym = 0;
 	char** tokens = malloc(sizeof(char*) * 20);
 	unsigned char max_token = 20;
 	token_count[0] = 0;
 	while (raw[curr] != '\0'){
 		if (raw[curr] == '=' || raw[curr] == '<' || raw[curr] == '>') {
+			last_sym = 1;
 			if (raw[curr+1] == '=' || raw[curr+1] == '<' || raw[curr+1] == '>'){
 				tokens[*token_count] = malloc(sizeof(char)*3);
 				tokens[*token_count][0] = raw[curr];
@@ -228,21 +231,38 @@ char** tokenize(char* raw, unsigned char* token_count){
 			}
 			curr++;
 			//printf("aa");
-		} else if (raw[curr] == '>' || raw[curr] == '<'){
-			tokens[*token_count] = malloc(sizeof(char)*2);
-			tokens[*token_count][0] = raw[curr];
-			tokens[*token_count][1] = '\0';
-			token_count[0]++;
 		} else if(is_math(raw+curr)){
-		tokens[*token_count] = malloc(sizeof(char)*2);
-		tokens[*token_count][0] = raw[curr];
-		tokens[*token_count][1] = '\0';
-		token_count[0]++;
-//printf("token made\n");
-		curr++;
-		prev = curr;
+			if (last_sym == 1){
+				if (raw[curr] != '-' && raw[curr] != '+'){
+					fprintf(stderr, "INVALID MATH OPERATOR COMBINATION");
+					exit(0);
+				}
+				prev = curr;
+				curr++;
+				if (!(raw[curr] > '0'-1 && raw[curr] < '9'+1)){
+					fprintf(stderr, "CANNOT APPLY SIGNAL MODIFIERS ON VARS");
+					exit(0);
+				}
+				while (raw[curr] > '0'-1 && raw[curr] < '9'+1){
+					curr++;
+				}
+			tokens[*token_count] = malloc(sizeof(char)*(curr-prev+1));
+			memcpy(tokens[*token_count], raw + prev, curr-prev);
+			tokens[*token_count][curr-prev] = '\0'; 
+			token_count[0]++;
+			} else {
+				last_sym = 1;
+				tokens[*token_count] = malloc(sizeof(char)*2);
+				tokens[*token_count][0] = raw[curr];
+				tokens[*token_count][1] = '\0';
+				token_count[0]++;
+				//printf("token made\n");
+				curr++;
+				prev = curr;
+			}
 		} else if (raw[curr] > '0'-1 && raw[curr] < '9'+1){
 			prev = curr;
+			last_sym = 0;
 			while (raw[curr] > '0'-1 && raw[curr] < '9'+1){
 				curr++;
 			}
@@ -253,6 +273,7 @@ char** tokenize(char* raw, unsigned char* token_count){
 //printf("token made\n");
 		} else if (raw[curr] != '\n' && raw[curr] != ' ' && raw[curr] != '	'){
 			prev = curr;
+			last_sym = 0;
 			while (raw[curr] != '\n' && raw[curr] != '\0' && raw[curr] != ' ' && raw[curr] != '	' && is_math(raw+curr) == 0){
 				curr++;
 			}
@@ -293,14 +314,10 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 		((CMP_ARGS*)cmp.args)->arg1 = *var;
 		((CMP_ARGS*)cmp.args)->arg1_mode = DATA_PTR;
 		curr_i++;
-	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
 		((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
 		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
 		curr_i++;
-	} else if ((tokens[curr_i+1][0] > '0' - 1 && tokens[curr_i+1][0] < '9' + 1) && tokens[curr_i][0] == '-') {
-		((CMP_ARGS*)cmp.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
-		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA; 
-		curr_i += 2;
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
@@ -324,12 +341,12 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 			mode = mode | SMALLER;
 		}
 	}
-	fprintf(stderr, "mode: %d\n", mode);
+	//fprintf(stderr, "mode: %d\n", mode);
 	curr_i++;
 //printf("mode %d \n", mode);
 	//printf("cmp comparison done.\n");
 	((CMP_ARGS*)cmp.args)->comparison = mode;
-	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
 		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
 		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
 		curr_i++;
@@ -337,10 +354,6 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 		((CMP_ARGS*)cmp.args)->arg2 = *var;
 		((CMP_ARGS*)cmp.args)->arg2_mode = DATA_PTR;
 		curr_i++;
-	} else if ((tokens[curr_i+1][0] > '0' - 1 && tokens[curr_i+1][0] < '9' + 1) && tokens[curr_i][0] == '-') {
-		((CMP_ARGS*)cmp.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
-		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-		curr_i+=2;
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
@@ -412,7 +425,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	unsigned char num_i = 0;
 	char* prev_sym = NULL;
 	for (int i = 0; i < token_length; i++){
-		if (is_math(tokens[i])){
+		if (is_math(tokens[i]) && tokens[i][1] == '\0'){
 			if (prev_sym != NULL){
 				num_stack[num_i] = prev_sym;
 				num_i++;
@@ -428,6 +441,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	}
 	num_stack[num_i] = prev_sym;
 	num_i++;
+	printf("teste: %s %s %s \n", num_stack[0], num_stack[1], num_stack[2]);
 	if (num_i < 3){
 		printf("MALFORMED MATH, LACK OF SYMBOLS\n");
 		exit(0);
@@ -435,7 +449,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	TWO_ARGS* args;
 	int i = 0;
 	while (i < num_i){
-	 while (is_math(num_stack[i]) == 0) i++;
+		while (is_math(num_stack[i]) == 0 || num_stack[i][1] != '\0') i++;
 	 	if (num_stack[i][0] == '*') {
 			emul->instructions[emul->instruction_total] = (Instruction) {NULL, MUL_IND};
 		 } else if (num_stack[i][0] == '/') {
@@ -448,9 +462,10 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 			emul->instructions[emul->instruction_total] = (Instruction) {NULL, MOD_IND};
 	 	}
 		args = malloc(sizeof(TWO_ARGS));
-		//printf("equaltion!\n");
+		//printf("equaltion! %d \n", i);
 		if (i < 3){
-			if (num_stack[i-2][0] > '0'-1 && num_stack[i-2][0] < '9'+1){
+			if (!(num_stack[i-2][0] < '0' || num_stack[i-2][0] > '9') || num_stack[i-2][0] == '-' || num_stack[i-2][0] == '+'){
+				//printf("numa\n");
 				args->arg1_mode = RAW_DATA;
 				args->arg1 = strtoimax(num_stack[i-2], NULL, 10);
 			} else {
@@ -461,7 +476,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 			args->arg1_mode = DATA_PTR;
 			args->arg1 = TMP_MATH;
 		}
-		if (num_stack[i-1][0] > '0'-1 && num_stack[i-1][0] < '9'+1){
+		if (!(num_stack[i-1][0] < '0' || num_stack[i-1][0] > '9') || num_stack[i-1][0] == '-' || num_stack[i-1][0] == '+'){
 			args->arg2_mode = RAW_DATA;
 			args->arg2 = strtoimax(num_stack[i-1], NULL, 10);
 		} else {
@@ -602,7 +617,7 @@ Soldier* translate(FILE* read){
 						TWO_ARGS* args = malloc(sizeof(TWO_ARGS));
 						args->arg1_mode = DATA_PTR;
 						args->arg1 = *var_val;
-						if (tokens[2][0] > '0'-1 && tokens[2][1] < '9'+1){
+						if (tokens[2][0] > '0'-1 && tokens[2][0] < '9'+1){
 							args->arg2_mode = RAW_DATA;
 							args->arg1 = strtoimax(tokens[2], NULL, 10);
 						} else {
@@ -618,7 +633,7 @@ Soldier* translate(FILE* read){
 		} else if (keyword_code == SEEK_IND){
 			build_seek(emul, tokens, var_map);
 		} else if ((curr_var = getValue(var_map, tokens[i])) != NULL){
-			printf("variable match\n");
+			//printf("variable match\n");
 			if (strcmp(tokens[1], "=")){
 						printf("INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
@@ -720,8 +735,8 @@ Soldier* translate(FILE* read){
 	return emul;
 }
 void RUN(Soldier* soldier){
-	//is dead check.
-	if (soldier->curr < -1){
+	//is dead check, and if the script ended.
+	if (soldier->curr < -1 || soldier->curr == soldier->instruction_total){
 		return;
 	}
 	soldier->curr++;
