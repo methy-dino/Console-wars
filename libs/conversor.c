@@ -214,6 +214,12 @@ char** tokenize(char* raw, unsigned char* token_count){
 	char** tokens = malloc(sizeof(char*) * 20);
 	unsigned char max_token = 20;
 	token_count[0] = 0;
+	while (raw[curr] == ' ' || raw[curr] == '	'){
+		curr++;
+	}
+	if (raw[curr] == '#'){
+		return tokens;
+	}
 	while (raw[curr] != '\0'){
 		if (raw[curr] == '=' || raw[curr] == '<' || raw[curr] == '>') {
 			last_sym = 1;
@@ -624,12 +630,16 @@ Soldier* translate(FILE* read){
 		// skip white space.
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
-		printf("tokenized to %d tokens: \n[", tok_ct);
-		for (int j = 0; j < tok_ct; j++){
-			printf("%s, ", tokens[j]);
-		}
-		printf("]\n");
+		//printf("tokenized to %d tokens: \n[", tok_ct);
+		//for (int j = 0; j < tok_ct; j++){
+			//printf("%s, ", tokens[j]);
+		//}
+		//printf("]\n");
 		int assign_ind = -1;
+		if (tok_ct == 0){
+			free(tokens);
+			continue;
+		}
 		if ((keyword_code = check_keywords(tokens[0])) != NO_KEYWORD){
 			//printf("keyword code = %d\n", keyword_code); 
 			if (keyword_code == CON_JMP_IND){
@@ -774,7 +784,6 @@ Soldier* translate(FILE* read){
 		for (int j = 0; j < tok_ct; j++){
 			free(tokens[j]);
 		}
-
 		free(tokens);
 	}
 	fprintf(stderr, "compiled to %d instructions: \n", emul->instruction_total);
