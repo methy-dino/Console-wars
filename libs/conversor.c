@@ -94,9 +94,8 @@ void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
 	int x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
-	int result = game_check_at(x, y);
-	// same team returns 0, empty returns -1, diff team returns 1. 
-	soldier->vars[TMP_RET] = ((soldier->vars[SOL_ID] > 0 && result > 0) || (soldier->vars[SOL_ID] < 0 && result > INT_MIN && result < 0)) - (result == INT_MIN || result == 0);
+	// same team returns 1, empty returns 0, diff team returns 1. 
+	soldier->vars[TMP_RET] = check_try(soldier, x, y);
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
@@ -194,6 +193,8 @@ unsigned char check_keywords(char* buff){
 		return DECLARATION;
 	} else if (strcmp("RAND", buff + i) == 0){
 		return RAND_IND;
+	} else if (strcmp("CHECK", buff + i) == 0){
+		return CHECK_IND;
 	}
 	return NO_KEYWORD;
 }
@@ -408,8 +409,25 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 	seek.args = malloc(sizeof(TWO_ARGS));
 	((TWO_ARGS*)seek.args)->arg1_mode = DATA_PTR;
 	((TWO_ARGS*)seek.args)->arg2_mode = DATA_PTR;
-	((TWO_ARGS*)seek.args)->arg1 = *(int*)getValue(vars, tokens[1]);
-	((TWO_ARGS*)seek.args)->arg2 = *(int*)getValue(vars, tokens[2]);
+	int* val;
+	if ((val = (int*)getValue(vars, tokens[1])) == NULL){
+		fprintf(stderr, "SEEK: ARGUMENT 1 IS NOT A VAR\n");
+		exit(0);
+	}
+	if (*val < 6){
+		fprintf(stderr, "SEEK: ARGUMENT 1 IS A READ-ONLY VAR");
+		exit(0);
+	}
+	((TWO_ARGS*)seek.args)->arg1 = *val;
+	if ((val = (int*)getValue(vars, tokens[2])) == NULL){
+		fprintf(stderr, "SEEK: ARGUMENT 2 IS NOT A VAR\n");
+		exit(0);
+	}
+	if (*val < 6){
+		fprintf(stderr, "SEEK: ARGUMENT 2 IS A READ-ONLY VAR");
+		exit(0);
+	}
+	((TWO_ARGS*)seek.args)->arg2 = *val;
 }
 unsigned char priority(char* math_sym){
 	if (math_sym[0] == '+' || math_sym[0] == '-'){
@@ -441,7 +459,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	}
 	num_stack[num_i] = prev_sym;
 	num_i++;
-	printf("teste: %s %s %s \n", num_stack[0], num_stack[1], num_stack[2]);
+	//printf("teste: %s %s %s \n", num_stack[0], num_stack[1], num_stack[2]);
 	if (num_i < 3){
 		printf("MALFORMED MATH, LACK OF SYMBOLS\n");
 		exit(0);
@@ -520,6 +538,39 @@ void build_rand(HashMap* var_map, Soldier* emul, char** tokens){
 	emul->instructions[emul->instruction_total] = rand;
 	emul->instruction_total++;
 }
+void build_check(HashMap* var_map, Soldier* emul, char** tokens){
+	Instruction check = (Instruction) {NULL, CHECK_IND};
+	check.args = malloc(sizeof(TWO_ARGS));
+	int* var = NULL;
+	//printf("aaa\n");
+	if (!(tokens[1][0] < '0' || tokens[1][0] > '9')){
+		((TWO_ARGS*)check.args)->arg1 = strtoimax(tokens[1], NULL, 10);
+		((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
+	} else if ((var = (int*)getValue(var_map, tokens[1])) != NULL){
+		//printf("AAAA\n");
+		((TWO_ARGS*)check.args)->arg1 = *var;
+		((TWO_ARGS*)check.args)->arg1_mode = DATA_PTR;
+	} else {
+		printf("CHECK malformed, invalid arguments\n");
+		exit(0);
+	}
+	//printf("bbb\n");
+	if (!(tokens[2][0] < '0' || tokens[2][0] > '9')){
+		((TWO_ARGS*)check.args)->arg2 = strtoimax(tokens[2], NULL, 10);
+		((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
+	} else if ((var = (int*)getValue(var_map, tokens[2])) != NULL){
+		//printf("AAAA\n");
+		((TWO_ARGS*)check.args)->arg2 = *var;
+		((TWO_ARGS*)check.args)->arg2_mode = DATA_PTR;
+	} else {
+		printf("CHECK malformed, invalid arguments\n");
+		exit(0);
+	}
+	//printf("ccc\n");
+	emul->instructions[emul->instruction_total] = check;
+	emul->instruction_total++;
+}
+
 Soldier* translate(FILE* read){
 	Soldier* emul = malloc(sizeof(Soldier));
 	emul->instructions = malloc(sizeof(Instruction) * 256);
@@ -658,7 +709,7 @@ Soldier* translate(FILE* read){
 							break;
 						case CHECK_IND:
 							//TODO: IMPLEMENT CHECK
-							//build_check(var_map, emul, &tokens[2]);
+							build_check(var_map, emul, &tokens[2]);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
 							args->arg1_mode = DATA_PTR;
@@ -684,6 +735,7 @@ Soldier* translate(FILE* read){
 							break;
 					}
 				} else {
+					printf("%d keyword", keyword_code);
 				rpn_math(var_map, emul, &tokens[2], tok_ct - 2);
 				emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 				TWO_ARGS* args= malloc(sizeof(TWO_ARGS));
@@ -698,7 +750,7 @@ Soldier* translate(FILE* read){
 				TWO_ARGS* args = malloc(sizeof(TWO_ARGS));
 				args->arg1_mode = DATA_PTR;
 				args->arg1 = *(int*)getValue(var_map, tokens[0]);
-				if (tokens[2][0] > '0'-1 && tokens[2][1] < '9'+1){
+				if ((tokens[2][0] > '0'-1 && tokens[2][0] < '9'+1)||  tokens[2][0] == '-' ||  tokens[2][0] == '+'){
 					args->arg2_mode = RAW_DATA;
 					args->arg2 = strtoimax(tokens[2], NULL, 10);
 				} else {

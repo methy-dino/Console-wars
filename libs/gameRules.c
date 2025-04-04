@@ -171,6 +171,21 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	target->vars[SOL_Y] = n_y;
 	//fprintf(stderr, "moved from X:%d Y:%d to X:%d Y:%d\n", p_x, p_y, n_x, n_y);
 }
+int check_try(Soldier* user, int x_change, int y_change){
+	int team = user->vars[SOL_ID] > 0;
+	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
+		return 0;
+	}
+	if (user->vars[SOL_X] + x_change < 0 || user->vars[SOL_Y] + y_change < 0){
+		return 0;
+	}
+	int result = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
+	if (result == INT_MIN || result == 0){
+		return 0;
+	}
+	return ((result > 0) == team) - ((result > 0) != team);
+}
+
 void attack_try(Soldier* user, int x_change, int y_change){
 	//fprintf(stderr, "attack attempt\n");
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
