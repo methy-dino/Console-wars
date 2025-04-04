@@ -174,10 +174,10 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 int check_try(Soldier* user, int x_change, int y_change){
 	int team = user->vars[SOL_ID] > 0;
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
-		return 0;
+		return -2;
 	}
 	if (user->vars[SOL_X] + x_change < 0 || user->vars[SOL_Y] + y_change < 0){
-		return 0;
+		return -2;
 	}
 	int result = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
 	if (result == INT_MIN || result == 0){

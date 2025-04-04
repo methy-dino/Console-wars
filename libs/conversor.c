@@ -94,7 +94,7 @@ void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
 	int x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
-	// same team returns 1, empty returns 0, diff team returns -1. 
+	// same team returns 1, empty returns 0, diff team returns -1, returns -2 if out of bounds. 
 	soldier->vars[TMP_RET] = check_try(soldier, x, y);
 	//fprintf(stderr, "CHECK RETURNED %d\n", soldier->vars[TMP_RET]);
 }
@@ -104,9 +104,10 @@ void SOL_MOVE(Soldier* soldier, void* args){
 	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
 	//fprintf(stderr, "movedir is: %d\n", move_dir);
-	char moveY = (move_dir == 0) - (move_dir == 2);
+	char moveY = (move_dir == 2) - (move_dir == 0);
 	char moveX = (move_dir == 1) - (move_dir == 3);
 	//fprintf(stderr, "move try by %d X, %d Y\n", moveX, moveY);
+	//returns 1 if successful, 0 if not.
 	soldier->vars[TMP_RET] = move_try(soldier, moveX, moveY); 
 }
 void RAND(Soldier* soldier, void* args){
@@ -635,6 +636,12 @@ Soldier* translate(FILE* read){
 				build_con_jmp(var_map, emul, tokens);
 			} else if (keyword_code == JMP_IND){
 				build_jmp(emul, tokens);
+			} else if (keyword_code == RAND_IND){
+				build_rand(var_map, emul, tokens);
+			} else if (keyword_code == CHECK_IND){
+				build_check(var_map, emul, tokens);
+			} else if (keyword_code == SEEK_IND){
+				build_seek(emul, tokens, var_map);
 			} else if (keyword_code == SOL_ATK_IND){
 				if (tok_ct != 2){
 					fprintf(stderr, "IMPROPER ATTACK CALL SYNTAX\n");
@@ -682,8 +689,6 @@ Soldier* translate(FILE* read){
 					}
 				}
 			}
-		} else if (keyword_code == SEEK_IND){
-			build_seek(emul, tokens, var_map);
 		} else if ((curr_var = getValue(var_map, tokens[i])) != NULL){
 			//printf("variable match\n");
 			if (strcmp(tokens[1], "=")){
@@ -736,7 +741,7 @@ Soldier* translate(FILE* read){
 							break;
 					}
 				} else {
-					printf("%d keyword", keyword_code);
+					//printf("%d keyword", keyword_code);
 				rpn_math(var_map, emul, &tokens[2], tok_ct - 2);
 				emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 				TWO_ARGS* args= malloc(sizeof(TWO_ARGS));
