@@ -84,7 +84,7 @@ char** tokenize(char* raw, unsigned char* token_count);
 void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens);
 void build_jmp(Soldier* emul, char** tokens);
 unsigned char priority(char* math_sym);
-void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char token_length);
+void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char token_length, int* max_inst);
 void build_rand(HashMap* var_map, Soldier* emul, char** tokens);
 Soldier* translate(FILE* read);
 void RUN(Soldier* soldier);

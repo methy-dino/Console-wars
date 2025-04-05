@@ -442,7 +442,23 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 	((TWO_ARGS*)seek.args)->arg2 = *val;
 }
 
-void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char token_length){
+void inst_check(int curr, Instruction** lines, int* max){
+	if (curr < *max){
+		return;
+	}
+	int* lines_cp = malloc(sizeof(int) * (*max) * 2);
+	memcpy(lines_cp, lines[0], (*max) * 2 * sizeof(Instruction));
+	*max = (*max) * 2;
+}
+void line_check(int curr, int** lines, int* max){
+	if (curr < *max){
+		return;
+	}
+	int* lines_cp = malloc(sizeof(int) * (*max) * 2);
+	memcpy(lines_cp, lines[0], (*max) * 2 * sizeof(int));
+	*max = (*max) * 2;
+}
+void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char token_length, int* max_inst){
 	char** num_stack = malloc(sizeof(char*) * token_length);
 	unsigned char num_i = 0;
 	char* prev_sym = NULL;
@@ -504,6 +520,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 			args->arg2_mode = DATA_PTR;
 			args->arg2 = *(int*)getValue(var_map, num_stack[i-1]);
 		}
+		inst_check(emul->instruction_total+1,&(emul->instructions), max_inst);
 		emul->instructions[emul->instruction_total].args = args;
 		emul->instruction_total++;
 		i++;
@@ -624,10 +641,12 @@ Soldier* translate(FILE* read){
 	Soldier* emul = malloc(sizeof(Soldier));
 	emul->instructions = malloc(sizeof(Instruction) * 256);
 	emul->instruction_total = 0;
-	emul->curr = 0;
+	emul->curr = -1;
+	int max_inst = 256;
 	char buff[1024] = {'\0'};
 	int i = 0;
-	int line_relation[256] = {0};
+	int* line_relation = malloc(sizeof(int) * 256);
+	int max_lines = 256;
 	int curr_line = 0;
 	int var_ind = 6;
 	//Instruction curr_inst = ({0};
@@ -668,6 +687,7 @@ Soldier* translate(FILE* read){
 	while (fgets(buff, 1024, read) != NULL){
 		line_relation[curr_line] = emul->instruction_total;
 		curr_line++;
+		line_check(curr_line, &line_relation, &max_lines);
 		// skip white space.
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
@@ -688,22 +708,31 @@ Soldier* translate(FILE* read){
 		if ((keyword_code = check_keywords(tokens[0])) != NO_KEYWORD){
 			//printf("keyword code = %d\n", keyword_code); 
 			if (keyword_code == CON_JMP_IND){
+				// con_jmp adds 2 instructions, always.
+				inst_check(emul->instruction_total+1, &(emul->instructions), &max_inst);
 				build_con_jmp(var_map, emul, tokens);
 			} else if (keyword_code == JMP_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				build_jmp(emul, tokens);
 			} else if (keyword_code == RAND_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				build_rand(var_map, emul, tokens);
 			} else if (keyword_code == CHECK_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				build_check(var_map, emul, tokens);
 			} else if (keyword_code == SEEK_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				build_seek(emul, tokens, var_map);
 			} else if (keyword_code == SOL_ATK_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				if (tok_ct != 2){
 					fprintf(stderr, "IMPROPER ATTACK CALL SYNTAX\n");
 					exit(0);
 				}
 				build_atk(emul, tokens, var_map);
 			} else if (keyword_code == SOL_MOVE_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				if (tok_ct != 2){
 					fprintf(stderr, "IMPROPER MOVE CALL SYNTAX\n");
 					exit(0);
@@ -726,6 +755,7 @@ Soldier* translate(FILE* read){
 						fprintf(stderr, "INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
 					}
+					inst_check(emul->instruction_total+1,&(emul->instructions), &max_inst);
 					if (tok_ct > 3) {
 					} else {
 						TWO_ARGS* args = malloc(sizeof(TWO_ARGS));
@@ -749,13 +779,14 @@ Soldier* translate(FILE* read){
 			if (strcmp(tokens[1], "=")){
 						printf("INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
-					}
+			}
 			if (curr_var[0] < 5){
 			fprintf(stderr, "ATTEMPTED TO MODIFY READ ONLY VARIABLE!\n");
 			}
 			if (tok_ct > 3) {
 				if ((keyword_code = check_keywords(tokens[2])) != NO_KEYWORD){
 					TWO_ARGS* args;
+					inst_check(emul->instruction_total+1, &(emul->instructions), &max_inst);
 					switch (keyword_code){
 						case RAND_IND:
 							build_rand(var_map, emul, &tokens[2]);
@@ -769,7 +800,7 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case CHECK_IND:
-							//TODO: IMPLEMENT CHECK
+							//DONE: IMPLEMENT CHECK
 							build_check(var_map, emul, &tokens[2]);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
@@ -796,8 +827,8 @@ Soldier* translate(FILE* read){
 							break;
 					}
 				} else {
-					//printf("%d keyword", keyword_code);
-				rpn_math(var_map, emul, &tokens[2], tok_ct - 2);
+				rpn_math(var_map, emul, &tokens[2], tok_ct - 2, &max_inst);
+				inst_check(emul->instruction_total+1,&(emul->instructions), &max_inst);
 				emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 				TWO_ARGS* args= malloc(sizeof(TWO_ARGS));
 				args->arg1_mode = DATA_PTR;
@@ -808,6 +839,7 @@ Soldier* translate(FILE* read){
 				emul->instruction_total++;
 			}
 		} else {
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				TWO_ARGS* args = malloc(sizeof(TWO_ARGS));
 				args->arg1_mode = DATA_PTR;
 				args->arg1 = *(int*)getValue(var_map, tokens[0]);
