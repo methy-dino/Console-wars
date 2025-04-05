@@ -86,7 +86,7 @@ void SOL_ATK(Soldier* soldier, void* args){
 	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
 	//fprintf(stderr, "movedir is: %d\n", move_dir);
-	char moveY = (move_dir == 0) - (move_dir == 2);
+	char moveY = (move_dir == 2) - (move_dir == 0);
 	char moveX = (move_dir == 1) - (move_dir == 3);
 	attack_try(soldier, moveX, moveY);
 }
@@ -210,16 +210,16 @@ char is_comparator(char* str){
 char** tokenize(char* raw, unsigned char* token_count){
 	unsigned int prev = 0;
 	unsigned int curr = 0;
-	char last_sym = 0;
-	char** tokens = malloc(sizeof(char*) * 20);
-	unsigned char max_token = 20;
-	token_count[0] = 0;
 	while (raw[curr] == ' ' || raw[curr] == '	'){
 		curr++;
 	}
 	if (raw[curr] == '#'){
-		return tokens;
+		return NULL;
 	}
+	char last_sym = 0;
+	char** tokens = malloc(sizeof(char*) * 20);
+	unsigned char max_token = 20;
+	token_count[0] = 0;	
 	while (raw[curr] != '\0'){
 		if (raw[curr] == '=' || raw[curr] == '<' || raw[curr] == '>') {
 			last_sym = 1;
@@ -635,6 +635,10 @@ Soldier* translate(FILE* read){
 			//printf("%s, ", tokens[j]);
 		//}
 		//printf("]\n");
+		if (tokens == NULL){
+			curr_line--;
+			continue;
+		}
 		int assign_ind = -1;
 		if (tok_ct == 0){
 			free(tokens);
