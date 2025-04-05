@@ -114,7 +114,11 @@ void RAND(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
 	int min = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int max = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
-	soldier->vars[TMP_RET] = min + (rand() % max-min);
+	if (max < min){
+		soldier->vars[TMP_RET] = 0;
+		return;
+	}
+	soldier->vars[TMP_RET] = min + (rand() % (max-min));
 	//printf("min %d, max %d generated %d \n", min, max, soldier->vars[TMP_RET]);
 }
 void ADD(Soldier* soldier, void* args){
@@ -437,15 +441,7 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 	}
 	((TWO_ARGS*)seek.args)->arg2 = *val;
 }
-unsigned char priority(char* math_sym){
-	if (math_sym[0] == '+' || math_sym[0] == '-'){
-		return 1;
-	}
-	if (math_sym[0] == '*' || math_sym[0] == '/' || math_sym[0] == '%'){
-		return 2;
-	}
-	return 0;
-}
+
 void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char token_length){
 	char** num_stack = malloc(sizeof(char*) * token_length);
 	unsigned char num_i = 0;
@@ -467,7 +463,6 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	}
 	num_stack[num_i] = prev_sym;
 	num_i++;
-	//printf("teste: %s %s %s \n", num_stack[0], num_stack[1], num_stack[2]);
 	if (num_i < 3){
 		printf("MALFORMED MATH, LACK OF SYMBOLS\n");
 		exit(0);
@@ -518,26 +513,49 @@ void build_rand(HashMap* var_map, Soldier* emul, char** tokens){
 	Instruction rand = (Instruction) {NULL, RAND_IND};
 	rand.args = malloc(sizeof(TWO_ARGS));
 	int* var = NULL;
+	int curr_i = 1;
 	//printf("aaa\n");
-	if (!(tokens[1][0] < '0' || tokens[1][0] > '9')){
-		((TWO_ARGS*)rand.args)->arg1 = strtoimax(tokens[1], NULL, 10);
+	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+		((TWO_ARGS*)rand.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
 		((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
-	} else if ((var = (int*)getValue(var_map, tokens[1])) != NULL){
+		curr_i++;
+	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
+		if (tokens[curr_i][0] == '+'){
+			((TWO_ARGS*)rand.args)->arg1 = strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
+		} else {
+			((TWO_ARGS*)rand.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
+		}
+		curr_i+=2;
+	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
 		//printf("AAAA\n");
 		((TWO_ARGS*)rand.args)->arg1 = *var;
 		((TWO_ARGS*)rand.args)->arg1_mode = DATA_PTR;
+		curr_i++;
 	} else {
 		printf("RAND malformed, invalid arguments\n");
 		exit(0);
 	}
 	//printf("bbb\n");
-	if (!(tokens[2][0] < '0' || tokens[2][0] > '9')){
-		((TWO_ARGS*)rand.args)->arg2 = strtoimax(tokens[2], NULL, 10);
+	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+		((TWO_ARGS*)rand.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
 		((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
-	} else if ((var = (int*)getValue(var_map, tokens[2])) != NULL){
+		curr_i++;
+	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
+		if (tokens[curr_i][0] == '+'){
+			((TWO_ARGS*)rand.args)->arg2 = strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
+		} else {
+			((TWO_ARGS*)rand.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
+		}
+		curr_i+=2;
+	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
 		//printf("AAAA\n");
 		((TWO_ARGS*)rand.args)->arg2 = *var;
 		((TWO_ARGS*)rand.args)->arg2_mode = DATA_PTR;
+		curr_i++;
 	} else {
 		printf("RAND malformed, invalid arguments\n");
 		exit(0);
@@ -550,28 +568,51 @@ void build_check(HashMap* var_map, Soldier* emul, char** tokens){
 	Instruction check = (Instruction) {NULL, CHECK_IND};
 	check.args = malloc(sizeof(TWO_ARGS));
 	int* var = NULL;
+	int curr_i = 1;
 	//printf("aaa\n");
-	if (!(tokens[1][0] < '0' || tokens[1][0] > '9')){
-		((TWO_ARGS*)check.args)->arg1 = strtoimax(tokens[1], NULL, 10);
+	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+		((TWO_ARGS*)check.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
 		((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
-	} else if ((var = (int*)getValue(var_map, tokens[1])) != NULL){
+		curr_i++;
+	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
+		if (tokens[curr_i][0] == '+'){
+			((TWO_ARGS*)check.args)->arg1 = strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
+		} else {
+			((TWO_ARGS*)check.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
+		}
+		curr_i+=2;
+	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
 		//printf("AAAA\n");
 		((TWO_ARGS*)check.args)->arg1 = *var;
 		((TWO_ARGS*)check.args)->arg1_mode = DATA_PTR;
+		curr_i++;
 	} else {
-		printf("CHECK malformed, invalid arguments\n");
+		printf("RAND malformed, invalid arguments\n");
 		exit(0);
 	}
 	//printf("bbb\n");
-	if (!(tokens[2][0] < '0' || tokens[2][0] > '9')){
-		((TWO_ARGS*)check.args)->arg2 = strtoimax(tokens[2], NULL, 10);
+	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
+		((TWO_ARGS*)check.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
 		((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
-	} else if ((var = (int*)getValue(var_map, tokens[2])) != NULL){
+		curr_i++;
+	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
+		if (tokens[curr_i][0] == '+'){
+			((TWO_ARGS*)check.args)->arg2 = strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
+		} else {
+			((TWO_ARGS*)check.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
+			((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
+		}
+		curr_i+=2;
+	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
 		//printf("AAAA\n");
 		((TWO_ARGS*)check.args)->arg2 = *var;
 		((TWO_ARGS*)check.args)->arg2_mode = DATA_PTR;
+		curr_i++;
 	} else {
-		printf("CHECK malformed, invalid arguments\n");
+		printf("RAND malformed, invalid arguments\n");
 		exit(0);
 	}
 	//printf("ccc\n");
@@ -584,9 +625,9 @@ Soldier* translate(FILE* read){
 	emul->instructions = malloc(sizeof(Instruction) * 256);
 	emul->instruction_total = 0;
 	emul->curr = 0;
-	char buff[1024];
+	char buff[1024] = {'\0'};
 	int i = 0;
-	int line_relation[256];
+	int line_relation[256] = {0};
 	int curr_line = 0;
 	int var_ind = 6;
 	//Instruction curr_inst = ({0};
