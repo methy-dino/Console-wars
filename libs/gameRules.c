@@ -159,6 +159,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	init_pair(BLUE_TEAM, COLOR_CYAN, COLOR_BLACK);
 	init_pair(ATK_COL, COLOR_WHITE, COLOR_BLACK);
 	noecho();
+	nodelay(stdscr, 1);
 	curs_set(0);
 	printf("starting display\n");
 	display_update();
@@ -328,9 +329,30 @@ void game_step(char quantity){
 	}
 	display_update();
 }
+int paused = 0;
+unsigned int timer = 0;
+int key_code = 0;
 void game_loop(){
+	paused = 0;
 	while(1){
-		usleep(40000);
-		game_step(1);	
+		usleep(16666);
+		timer += 16666;
+		while ((key_code = getch()) != ERR){
+			switch(key_code){
+				case 'd':
+					game_step(1);
+					break;
+				case 'D':
+					game_step(3);
+					break;
+				case 'p':
+					paused = !(paused == 1);
+					break;
+			}
+		}
+		if (paused == 0 && timer > 16666 * 3 -1){
+			timer = 0;
+			game_step(1);
+		}
 	}
 }
