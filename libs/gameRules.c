@@ -27,33 +27,68 @@ int game_check_at(int x, int y){
 int convert_1d(int x, int y){
 	return 2+x+y*board[COL];
 }
-void display_update(){
-	move(0,0);
-	for (unsigned int y = 0; y < board[ROW]; y++){
-		for (unsigned int x = 0; x < board[COL]; x++){
-			if (board[convert_1d(x,y)] != INT_MIN){
-				if (board[convert_1d(x,y)] == 0){
-					attron(COLOR_PAIR(ATK_COL));
-					printw("~");
-				} else { 
-					if (board[convert_1d(x,y)] > 0){
-						//printf("found red at: %d, %d\n",x,y);
-						attron(COLOR_PAIR(RED_TEAM));
-					} else {
-						//printf("found blue at: %d, %d\n",x,y);
-						attron(COLOR_PAIR(BLUE_TEAM));
+int pause_show = 0;
+int paused = 0;
+unsigned int timer = 0;
+void display_update(char flush_c){
+	if (paused == 0 || flush_c == 1){
+		move(0,0);
+		for (unsigned int y = 0; y < board[ROW]; y++){
+			for (unsigned int x = 0; x < board[COL]; x++){
+				if (board[convert_1d(x,y)] != INT_MIN){
+					if (board[convert_1d(x,y)] == 0){
+						attron(COLOR_PAIR(ATK_COL));
+						printw("~");
+					} else { 
+						if (board[convert_1d(x,y)] > 0){
+							//printf("found red at: %d, %d\n",x,y);
+							attron(COLOR_PAIR(RED_TEAM));
+						} else {
+							//printf("found blue at: %d, %d\n",x,y);
+							attron(COLOR_PAIR(BLUE_TEAM));
+						}
+						printw("#");
 					}
-					printw("#");
+				} else {
+					printw(" ");
 				}
-			} else {
-			 printw(" ");
+			}
+		}
+		for (int i = 0; i < atk_ct; i++){
+			board[atk_tiles[i]] = INT_MIN;	
+		}
+		atk_ct=0;
+	} else {
+		move(0,0);
+		pause_show += 17;
+		if (pause_show < 1000){
+			attron(COLOR_PAIR(ATK_COL));
+			printw("PAUSED!");
+		} else {
+			if (pause_show > 2000){
+				pause_show = 0;
+			}
+			for (int i = 0; i < 7; i++){
+				if (board[i+2] != INT_MIN){
+					if (board[i+2] == 0){
+						attron(COLOR_PAIR(ATK_COL));
+						printw("~");
+					} else { 
+						if (board[i+2] > 0){
+							//printf("found red at: %d, %d\n",x,y);
+							attron(COLOR_PAIR(RED_TEAM));
+						} else {
+							//printf("found blue at: %d, %d\n",x,y);
+							attron(COLOR_PAIR(BLUE_TEAM));
+						}
+						printw("#");
+					}
+				} else {
+					printw(" ");
+				}
 			}
 		}
 	}
-	for (int i = 0; i < atk_ct; i++){
-		board[atk_tiles[i]] = INT_MIN;	
-	}
-	atk_ct=0;
 	refresh();
 }
 void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count){
@@ -166,7 +201,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	nodelay(stdscr, 1);
 	curs_set(0);
 	printf("starting display\n");
-	display_update();
+	display_update(1);
 }
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	int id = board[convert_1d(p_x, p_y)];
@@ -192,11 +227,11 @@ int check_try(Soldier* user, int x_change, int y_change){
 }
 
 void game_end(int C_PAIR){
-	display_update();
+	display_update(1);
 	move(0,0);
 	attron(COLOR_PAIR(C_PAIR));
 	for (int i = 0; i < board[ROW] * board[COL]; i++){
-		usleep(2000);
+		usleep(5000000 / (board[COL] * board[ROW]));
 		printw(" ");
 		refresh();
 	}
@@ -210,6 +245,7 @@ void game_end(int C_PAIR){
 	refresh();
 	sleep(3);
 	endwin();
+	while (getch() != ERR);
 	exit(0);
 }
 void attack_try(Soldier* user, int x_change, int y_change){
@@ -345,15 +381,15 @@ int move_try(Soldier* soldier, int x_change, int y_change){
 }
 void game_step(char quantity){
 	for (char i = 0; i < quantity; i++){
+		usleep(1);
 		for (int j = 0; j < base_ct; j++){
 			RUN(&red_team[j]);
 			RUN(&blue_team[j]);
 		}
 	}
-	display_update();
+	//display_update();
 }
-int paused = 0;
-unsigned int timer = 0;
+
 int key_code = 0;
 void game_loop(){
 	paused = 0;
@@ -364,9 +400,12 @@ void game_loop(){
 			switch(key_code){
 				case 'd':
 					game_step(1);
+					display_update(1);
 					break;
 				case 'D':
 					game_step(3);
+					display_update(1);
+					usleep(1);
 					break;
 				case 'p':
 					paused = !(paused == 1);
@@ -381,6 +420,7 @@ void game_loop(){
 		if (paused == 0 && timer > 16666 * 3 -1){
 			timer = 0;
 			game_step(1);
-		}
+		}	
+		display_update(0);
 	}
 }
