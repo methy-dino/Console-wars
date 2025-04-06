@@ -25,5 +25,5 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y);
 int check_try(Soldier* user, int x_change, int y_change);
 void attack_try(Soldier* user, int x_change, int y_change);
 int move_try(Soldier* soldier, int x_change, int y_change);
-void game_step(char quantity);
+void game_step();
 void game_loop();

@@ -379,13 +379,10 @@ int move_try(Soldier* soldier, int x_change, int y_change){
 	game_move_to(soldier->vars[SOL_X], soldier->vars[SOL_Y], soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change, soldier);
 	return 0;
 }
-void game_step(char quantity){
-	for (char i = 0; i < quantity; i++){
-		usleep(1);
-		for (int j = 0; j < base_ct; j++){
-			RUN(&red_team[j]);
-			RUN(&blue_team[j]);
-		}
+void game_step(){
+	for (int j = 0; j < base_ct; j++){
+		RUN(&red_team[j]);
+		RUN(&blue_team[j]);
 	}
 	//display_update();
 }
@@ -399,13 +396,12 @@ void game_loop(){
 		while ((key_code = getch()) != ERR){
 			switch(key_code){
 				case 'd':
-					game_step(1);
+					game_step();
 					display_update(1);
 					break;
 				case 'D':
-					game_step(3);
+					game_step();
 					display_update(1);
-					usleep(1);
 					break;
 				case 'p':
 					paused = !(paused == 1);
@@ -419,7 +415,7 @@ void game_loop(){
 		}
 		if (paused == 0 && timer > 16666 * 3 -1){
 			timer = 0;
-			game_step(1);
+			game_step();
 		}	
 		display_update(0);
 	}
