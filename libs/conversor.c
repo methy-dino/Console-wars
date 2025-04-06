@@ -440,6 +440,8 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 		exit(0);
 	}
 	((TWO_ARGS*)seek.args)->arg2 = *val;
+	emul->instructions[emul->instruction_total] = seek;
+	emul->instruction_total++;
 }
 
 void inst_check(int curr, Instruction** lines, int* max){
@@ -691,11 +693,11 @@ Soldier* translate(FILE* read){
 		// skip white space.
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
-		//printf("tokenized to %d tokens: \n[", tok_ct);
-		//for (int j = 0; j < tok_ct; j++){
-			//printf("%s, ", tokens[j]);
-		//}
-		//printf("]\n");
+		/*fprintf(stderr, "tokenized to %d tokens: \n[", tok_ct);
+		for (int j = 0; j < tok_ct; j++){
+			fprintf(stderr, "%s, ", tokens[j]);
+		}
+		fprintf(stderr, "]\n");*/
 		if (tokens == NULL){
 			curr_line--;
 			continue;
