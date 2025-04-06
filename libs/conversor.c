@@ -865,12 +865,12 @@ Soldier* translate(FILE* read){
 		}
 		free(tokens);
 	}
-	fprintf(stderr, "compiled to %d instructions: \n", emul->instruction_total);
+	fprintf(stdout, "compiled to %d instructions: \n", emul->instruction_total);
 	for (int i = 0; i < emul->instruction_total; i++){
 		if (emul->instructions[i].instruction_id == JMP_IND || emul->instructions[i].instruction_id == CON_JMP_IND){
 			((ONE_ARG*)emul->instructions[i].args)->arg = line_relation[((ONE_ARG*)emul->instructions[i].args)->arg]-1;
 		}
-		fprintf(stderr, "%dth - ID: %d \n", i, emul->instructions[i].instruction_id);
+		fprintf(stdout, "%dth - ID: %d \n", i, emul->instructions[i].instruction_id);
 	}
 	for (int i = 0; i < 32; i++){
 		emul->vars[i] = 0;
@@ -882,10 +882,13 @@ Soldier* translate(FILE* read){
 }
 void RUN(Soldier* soldier){
 	//is dead check, and if the script ended.
-	if (soldier->curr < -1 || soldier->curr == soldier->instruction_total){
+	if (soldier->curr < -1){
 		return;
 	}
 	soldier->curr++;
+ if (soldier->curr == soldier->instruction_total){
+		soldier->curr = 0;
+	}
 	//printf("running instruction number %d\n", soldier->curr);
 	instructions[soldier->instructions[soldier->curr].instruction_id](soldier, soldier->instructions[soldier->curr].args);	
 	//printf("variable state: \n[");

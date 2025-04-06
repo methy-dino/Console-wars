@@ -6,8 +6,10 @@
 #define ROW 1
 #define COL 0
 #define RED_TEAM 1
-#define BLUE_TEAM 2
-#define ATK_COL 3
+#define RED_WIN 2
+#define BLUE_TEAM 3
+#define BLUE_WIN 4
+#define ATK_COL 5
 //board of all soldiers
 int* board = NULL;
 int red_ct = 0;
@@ -156,7 +158,9 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	//initscr();
 	start_color();
 	init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
+	init_pair(RED_WIN, COLOR_WHITE, COLOR_RED);
 	init_pair(BLUE_TEAM, COLOR_CYAN, COLOR_BLACK);
+	init_pair(BLUE_WIN, COLOR_WHITE, COLOR_CYAN);
 	init_pair(ATK_COL, COLOR_WHITE, COLOR_BLACK);
 	noecho();
 	nodelay(stdscr, 1);
@@ -187,6 +191,27 @@ int check_try(Soldier* user, int x_change, int y_change){
 	return ((result > 0) == team) - ((result > 0) != team);
 }
 
+void game_end(int C_PAIR){
+	display_update();
+	move(0,0);
+	attron(COLOR_PAIR(C_PAIR));
+	for (int i = 0; i < board[ROW] * board[COL]; i++){
+		usleep(2000);
+		printw(" ");
+		refresh();
+	}
+	move(0,0);
+	if (C_PAIR == RED_WIN){
+		printw("RED");
+	} else {
+		printw("BLUE");
+	}
+	printw(" team wins!");
+	refresh();
+	sleep(3);
+	endwin();
+	exit(0);
+}
 void attack_try(Soldier* user, int x_change, int y_change){
 	//fprintf(stderr, "attack attempt\n");
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
@@ -210,12 +235,10 @@ void attack_try(Soldier* user, int x_change, int y_change){
 		blue_ct--;
 	}
 	if (red_ct == 0){
-			endwin();
-			exit(0);
+			game_end(BLUE_WIN);
 	}
 	if (blue_ct == 0){
-			endwin();
-			exit(0);
+			game_end(RED_WIN);
 	}
 }
 void seek_try(Soldier* soldier, int ptrX, int ptrY){
@@ -347,6 +370,11 @@ void game_loop(){
 					break;
 				case 'p':
 					paused = !(paused == 1);
+					break;
+				case KEY_RESIZE:
+					endwin();
+					fprintf(stderr, "terminated due to terminal resize.\n");
+					exit(1);
 					break;
 			}
 		}
