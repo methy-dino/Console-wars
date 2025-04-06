@@ -824,6 +824,17 @@ Soldier* translate(FILE* read){
 							emul->instructions[emul->instruction_total].args = args;
 							emul->instruction_total++;
 							break;
+						case SEEK_IND:
+							build_seek(emul, &tokens[2], var_map);
+							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
+							args= malloc(sizeof(TWO_ARGS));
+							args->arg1_mode = DATA_PTR;
+							args->arg1 = curr_var[0];
+							args->arg2_mode = DATA_PTR;
+							args->arg2 = TMP_RET;
+							emul->instructions[emul->instruction_total].args = args;
+							emul->instruction_total++;
+							break;
 						default:
 							printf("INVALID MEMORY ASSERT!");
 							break;

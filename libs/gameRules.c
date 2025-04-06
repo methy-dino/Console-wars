@@ -285,7 +285,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 	int length = 0;
 	// 0 for blue, 1 for red
 	int team = soldier->vars[SOL_ID] > 0;
-	int result = game_check_at(x,y);
+	int result = 0;
 	// THIS SHOULD BE GRANTED TO RETURN, AND NOT RUN AFTER A TEAM DIES.
 	while (length < 6){
 		// DONE DIAGONALS.
@@ -296,9 +296,10 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 		if (!(x >= board[COL] || y >= board[ROW] || x < 0 || y < 0)){
 			int result = game_check_at(x,y);
 		}
-		if (((result == INT_MIN || (result > 0) != team)) && result != 0){
+		if (result != INT_MIN && ((result > 0) != team) && result != 0){
 			soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 			soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
+			soldier->vars[TMP_RET] = 1;
 			return;
 		}
 		for (int i = 0; i < length; i++){
@@ -308,9 +309,10 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (((result == INT_MIN || (result > 0) != team)) && result != 0){
+			if (result != INT_MIN && ((result > 0) != team) && result != 0){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
+				soldier->vars[TMP_RET] = 1;
 				return;
 			}
 		}
@@ -322,9 +324,10 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (((result == INT_MIN || (result > 0) != team)) && result != 0){
+			if (result != INT_MIN && ((result > 0) != team) && result != 0){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
+				soldier->vars[TMP_RET] = 1;
 				return;
 			}
 		}
@@ -336,9 +339,10 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (((result == INT_MIN || (result > 0) != team)) && result != 0){
+			if (result != INT_MIN && ((result > 0) != team) && result != 0){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
+				soldier->vars[TMP_RET] = 1;
 				return;
 			}
 		}
@@ -350,16 +354,17 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (((result == INT_MIN || (result > 0) != team)) && result != 0){
+			if (result != INT_MIN && ((result > 0) != team) && result != 0){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
+				soldier->vars[TMP_RET] = 1;
 				return;
 			}
 		}
 	}
-	//fprintf(stderr, "seek didn't find boowomp\n");
 	soldier->vars[ptrX] = 0;
 	soldier->vars[ptrY] = 0;
+	soldier->vars[TMP_RET] = 0;
 }
 int move_try(Soldier* soldier, int x_change, int y_change){
 	//fprintf(stderr, "%d %d %d %d max check !! \n", soldier->vars[SOL_X] + x_change, board[COL], soldier->vars[SOL_Y] + y_change, board[ROW]);
