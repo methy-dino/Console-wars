@@ -26,7 +26,7 @@ typedef struct cmp_arg_std {
 } CMP_ARGS;
 typedef struct instruc {
 	void* args;
-	char instruction_id;
+	unsigned char instruction_id;
 } Instruction;
 #define TMP_RET 0
 #define TMP_MATH 1
@@ -86,5 +86,6 @@ void build_jmp(Soldier* emul, char** tokens);
 unsigned char priority(char* math_sym);
 void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char token_length, int* max_inst);
 void build_rand(HashMap* var_map, Soldier* emul, char** tokens);
+void glob_init(int sol_ct);
 Soldier* translate(FILE* read);
 void RUN(Soldier* soldier);

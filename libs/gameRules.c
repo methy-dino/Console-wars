@@ -117,7 +117,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		board[i] = INT_MIN;
 		//printf("huh %d\n", i);
 	}
-	printf("COLS: %d LINES: %d", COLS, LINES);
+	printf("COLS: %d LINES: %d\n", COLS, LINES);
 	board[COL] = COLS;
 	board[ROW] = LINES;
 /*	for (int i = 0; i < board[ROW]; i++){
@@ -200,7 +200,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	noecho();
 	nodelay(stdscr, 1);
 	curs_set(0);
-	printf("starting display\n");
+	//printf("starting display\n");
 	display_update(1);
 }
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
@@ -314,9 +314,7 @@ void attack_try(Soldier* user, int dir, int distance){
 }
 void seek_try(Soldier* soldier, int ptrX, int ptrY){
 	int x = soldier->vars[SOL_X];
-	int tmp_x = 0;
 	int y = soldier->vars[SOL_Y];
-	int tmp_y = 0;
 	int length = 0;
 	// 0 for blue, 1 for red
 	int team = soldier->vars[SOL_ID] > 0;
@@ -329,7 +327,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 		length++;
 		//DOWN LEFT
 		if (!(x >= board[COL] || y >= board[ROW] || x < 0 || y < 0)){
-			int result = game_check_at(x,y);
+			result = game_check_at(x,y);
 		}
 		if (result != INT_MIN && ((result > 0) != team) && result != 0){
 			soldier->vars[ptrX] = x - soldier->vars[SOL_X];

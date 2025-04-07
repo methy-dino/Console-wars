@@ -11,6 +11,7 @@ int main(int argC, char** args){
 		return 0;
 	}
 	int soldiers = strtoimax(args[1], NULL, 10);
+	glob_init(soldiers);
 	fprintf(stdout, "started math with %d soldiers \n", soldiers);
 	char cwd[1024];
 	getcwd(cwd, 1024);
@@ -34,7 +35,7 @@ int main(int argC, char** args){
 	//fprintf(stderr, "bef %s", dir->string);
 	appendNoLen(dir, args[3], 128);
 	dir->string[dir->length] = '\0';
-	fprintf(stdout, "blue team code file = \"%s\"\n", dir->string, dir->length);
+	fprintf(stdout, "blue team code file = \"%s\"\n", dir->string);
 	code = fopen(dir->string, "rb+");
 	if (code != NULL) {
 		blue = translate(code);

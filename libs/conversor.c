@@ -6,6 +6,7 @@
 #include "gameRules.h"
 #include "conversor.h"
 #include <inttypes.h>
+HashMap* glob_vars = NULL;
 /*typedef struct arg_std_a {
 	char arg_mode;
 	int arg;
@@ -248,6 +249,10 @@ char** tokenize(char* raw, unsigned char* token_count){
 				tokens[*token_count][2] = '\0';
 				//printf("token made\n");
 				token_count[0]++;
+				if (token_count[0] == max_token){
+					fprintf(stderr, "TOO MANY TOKENS!\n");
+					exit(0);
+				}
 				curr++;
 			} else {
 			tokens[*token_count] = malloc(sizeof(char)*2);
@@ -255,6 +260,10 @@ char** tokenize(char* raw, unsigned char* token_count){
 			tokens[*token_count][1] = '\0';
 			token_count[0]++;
 			//printf("token made\n");
+				if (token_count[0] == max_token){
+					fprintf(stderr, "TOO MANY TOKENS!\n");
+					exit(0);
+				}
 			}
 			curr++;
 			//printf("aa");
@@ -277,12 +286,20 @@ char** tokenize(char* raw, unsigned char* token_count){
 			memcpy(tokens[*token_count], raw + prev, curr-prev);
 			tokens[*token_count][curr-prev] = '\0'; 
 			token_count[0]++;
+				if (token_count[0] == max_token){
+					fprintf(stderr, "TOO MANY TOKENS!\n");
+					exit(0);
+				}
 			} else {
 				last_sym = 1;
 				tokens[*token_count] = malloc(sizeof(char)*2);
 				tokens[*token_count][0] = raw[curr];
 				tokens[*token_count][1] = '\0';
 				token_count[0]++;
+				if (token_count[0] == max_token){
+					fprintf(stderr, "TOO MANY TOKENS!\n");
+					exit(0);
+				}
 				//printf("token made\n");
 				curr++;
 				prev = curr;
@@ -297,6 +314,10 @@ char** tokenize(char* raw, unsigned char* token_count){
 			memcpy(tokens[*token_count], raw + prev, curr-prev);
 			tokens[*token_count][curr-prev] = '\0'; 
 			token_count[0]++;
+			if (token_count[0] == max_token){
+					fprintf(stderr, "TOO MANY TOKENS!\n");
+					exit(0);
+			}
 //printf("token made\n");
 		} else if (raw[curr] != '\n' && raw[curr] != ' ' && raw[curr] != '	'){
 			prev = curr;
@@ -312,6 +333,10 @@ char** tokenize(char* raw, unsigned char* token_count){
 			}*/
 			tokens[*token_count][curr-prev] = '\0';
 			token_count[0]++;
+			if (token_count[0] == max_token){
+				fprintf(stderr, "TOO MANY TOKENS!\n");
+				exit(0);
+			}
 //printf("token made\n");
 		} else {
 			curr++;
@@ -341,6 +366,9 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 		((CMP_ARGS*)cmp.args)->arg1 = *var;
 		((CMP_ARGS*)cmp.args)->arg1_mode = DATA_PTR;
 		curr_i++;
+	} else if ((var = (int*) getValue(glob_vars, tokens[curr_i])) != NULL){
+		((CMP_ARGS*)cmp.args)->arg1 = *var;
+		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
 	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
 		((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
 		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
@@ -373,13 +401,16 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 //printf("mode %d \n", mode);
 	//printf("cmp comparison done.\n");
 	((CMP_ARGS*)cmp.args)->comparison = mode;
-	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
-		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
-		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-		curr_i++;
-	} else if ((var = (int*) getValue(var_mp, tokens[curr_i])) != NULL){
+	if ((var = (int*) getValue(var_mp, tokens[curr_i])) != NULL){
 		((CMP_ARGS*)cmp.args)->arg2 = *var;
 		((CMP_ARGS*)cmp.args)->arg2_mode = DATA_PTR;
+		curr_i++;
+	} else if ((var = (int*) getValue(glob_vars, tokens[curr_i])) != NULL){
+		((CMP_ARGS*)cmp.args)->arg2 = *var;
+		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
+	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
+		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
+		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
 		curr_i++;
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
@@ -404,14 +435,22 @@ void build_jmp(Soldier* emul, char** tokens){
 }
 void build_move(Soldier* emul, char** tokens, HashMap* vars){
 	Instruction move = (Instruction) {NULL, SOL_MOVE_IND};
+	int* var = NULL;
 	move.args = malloc(sizeof(ONE_ARG));
-	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
-		((ONE_ARG*)move.args)->arg_mode = DATA_PTR;
-		((ONE_ARG*)move.args)->arg = *(int*)getValue(vars, tokens[1]);
-	} else {
+	if (tokens[1][0] > '0'+1 && tokens[1][0] < '9'+1){
 		((ONE_ARG*)move.args)->arg_mode = RAW_DATA;
 		((ONE_ARG*)move.args)->arg = strtoimax(tokens[1], NULL, 10);
+	} else if ((var = (int*) getValue(glob_vars, tokens[1])) != NULL){
+		printf("BUUUUH %d\n", *var);
+		((ONE_ARG*)move.args)->arg = *var;
+		((ONE_ARG*)move.args)->arg_mode = RAW_DATA;
+	} else if ((var = (int*) getValue(vars, tokens[1])) != NULL){
+		printf("HOW %d\n", *var);
+		((ONE_ARG*)move.args)->arg_mode = DATA_PTR;
+		((ONE_ARG*)move.args)->arg = *var;
 		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
+	} else {
+		fprintf(stderr, "argument one of MOVE not recognized\n");
 	}
 	emul->instructions[emul->instruction_total] = move;
 	emul->instruction_total++;
@@ -419,13 +458,19 @@ void build_move(Soldier* emul, char** tokens, HashMap* vars){
 void build_atk(Soldier* emul, char** tokens, HashMap* vars){
 	Instruction atk = (Instruction) {NULL, SOL_ATK_IND};
 	atk.args = malloc(sizeof(ONE_ARG));
-	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
-		((ONE_ARG*)atk.args)->arg_mode = DATA_PTR;
-		((ONE_ARG*)atk.args)->arg = *(int*)getValue(vars, tokens[1]);
-	} else {
+	int* var = NULL;
+	if (tokens[1][0] > '0'+1 && tokens[1][0] < '9'+1){
 		((ONE_ARG*)atk.args)->arg_mode = RAW_DATA;
 		((ONE_ARG*)atk.args)->arg = strtoimax(tokens[1], NULL, 10);
-		//fprintf(stderr, "got %d as atk arg", ((ONE_ARG*)move.args)->arg);
+	} else if ((var = (int*) getValue(glob_vars, tokens[1])) != NULL){
+		((ONE_ARG*)atk.args)->arg = *var;
+		((ONE_ARG*)atk.args)->arg_mode = RAW_DATA;
+	} else if ((var = (int*) getValue(vars, tokens[1])) != NULL){
+		((ONE_ARG*)atk.args)->arg_mode = DATA_PTR;
+		((ONE_ARG*)atk.args)->arg = *var;
+		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
+	} else {
+		fprintf(stderr, "argument one of ATTACK not recognized\n");
 	}
 	emul->instructions[emul->instruction_total] = atk;
 	emul->instruction_total++;
@@ -460,13 +505,19 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 void build_secure(Soldier* emul, char** tokens, HashMap* vars){
 	Instruction secure = (Instruction) {NULL, SECURE_IND};
 	secure.args = malloc(sizeof(ONE_ARG));
-	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
-		((ONE_ARG*)secure.args)->arg_mode = DATA_PTR;
-		((ONE_ARG*)secure.args)->arg = *(int*)getValue(vars, tokens[1]);
-	} else {
+	int* var = NULL;
+	if (tokens[1][0] > '0'+1 && tokens[1][0] < '9'+1){
 		((ONE_ARG*)secure.args)->arg_mode = RAW_DATA;
 		((ONE_ARG*)secure.args)->arg = strtoimax(tokens[1], NULL, 10);
-		//fprintf(stderr, "got %d as atk arg", ((ONE_ARG*)move.args)->arg);
+	} else if ((var = (int*) getValue(glob_vars, tokens[1])) != NULL){
+		((ONE_ARG*)secure.args)->arg = *var;
+		((ONE_ARG*)secure.args)->arg_mode = RAW_DATA;
+	} else if ((var = (int*) getValue(vars, tokens[1])) != NULL){
+		((ONE_ARG*)secure.args)->arg_mode = DATA_PTR;
+		((ONE_ARG*)secure.args)->arg = *var;
+		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
+	} else {
+		fprintf(stderr, "argument one of SECURE not recognized\n");
 	}
 	emul->instructions[emul->instruction_total] = secure;
 	emul->instruction_total++;
@@ -493,6 +544,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	char** num_stack = malloc(sizeof(char*) * token_length);
 	unsigned char num_i = 0;
 	char* prev_sym = NULL;
+	int* var = NULL;
 	for (int i = 0; i < token_length; i++){
 		if (is_math(tokens[i]) && tokens[i][1] == '\0'){
 			if (prev_sym != NULL){
@@ -536,9 +588,12 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 				//printf("numa\n");
 				args->arg1_mode = RAW_DATA;
 				args->arg1 = strtoimax(num_stack[i-2], NULL, 10);
-			} else {
+			} else if ((var = (int*)getValue(var_map, num_stack[i-2])) != NULL){
 				args->arg1_mode = DATA_PTR;
-				args->arg1 = *(int*)getValue(var_map, num_stack[i-2]);
+				args->arg1 = *var;
+			} else if ((var = (int*)getValue(glob_vars, num_stack[i-2])) != NULL){
+				args->arg1 = *var;
+				args->arg1_mode = RAW_DATA;
 			}
 		} else {
 			args->arg1_mode = DATA_PTR;
@@ -547,9 +602,12 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 		if (!(num_stack[i-1][0] < '0' || num_stack[i-1][0] > '9') || num_stack[i-1][0] == '-' || num_stack[i-1][0] == '+'){
 			args->arg2_mode = RAW_DATA;
 			args->arg2 = strtoimax(num_stack[i-1], NULL, 10);
-		} else {
-			args->arg2_mode = DATA_PTR;
-			args->arg2 = *(int*)getValue(var_map, num_stack[i-1]);
+		} else if ((var = (int*)getValue(var_map, num_stack[i-2])) != NULL){
+			args->arg1_mode = DATA_PTR;
+			args->arg1 = *var;
+		} else if ((var = (int*)getValue(glob_vars, num_stack[i-2])) != NULL){
+			args->arg1 = *var;
+			args->arg1_mode = RAW_DATA;
 		}
 		inst_check(emul->instruction_total+1,&(emul->instructions), max_inst);
 		emul->instructions[emul->instruction_total].args = args;
@@ -581,6 +639,10 @@ void build_rand(HashMap* var_map, Soldier* emul, char** tokens){
 		((TWO_ARGS*)rand.args)->arg1 = *var;
 		((TWO_ARGS*)rand.args)->arg1_mode = DATA_PTR;
 		curr_i++;
+	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
+		((TWO_ARGS*)rand.args)->arg1 = *var;
+		((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
+		curr_i++;
 	} else {
 		printf("RAND malformed, invalid arguments\n");
 		exit(0);
@@ -603,6 +665,10 @@ void build_rand(HashMap* var_map, Soldier* emul, char** tokens){
 		//printf("AAAA\n");
 		((TWO_ARGS*)rand.args)->arg2 = *var;
 		((TWO_ARGS*)rand.args)->arg2_mode = DATA_PTR;
+		curr_i++;
+	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
+		((TWO_ARGS*)rand.args)->arg2 = *var;
+		((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
 		curr_i++;
 	} else {
 		printf("RAND malformed, invalid arguments\n");
@@ -636,6 +702,10 @@ void build_check(HashMap* var_map, Soldier* emul, char** tokens){
 		((TWO_ARGS*)check.args)->arg1 = *var;
 		((TWO_ARGS*)check.args)->arg1_mode = DATA_PTR;
 		curr_i++;
+	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
+		((TWO_ARGS*)check.args)->arg1 = *var;
+		((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
+		curr_i++;
 	} else {
 		printf("RAND malformed, invalid arguments\n");
 		exit(0);
@@ -659,6 +729,10 @@ void build_check(HashMap* var_map, Soldier* emul, char** tokens){
 		((TWO_ARGS*)check.args)->arg2 = *var;
 		((TWO_ARGS*)check.args)->arg2_mode = DATA_PTR;
 		curr_i++;
+	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
+		((TWO_ARGS*)check.args)->arg2 = *var;
+		((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
+		curr_i++;
 	} else {
 		printf("RAND malformed, invalid arguments\n");
 		exit(0);
@@ -667,7 +741,26 @@ void build_check(HashMap* var_map, Soldier* emul, char** tokens){
 	emul->instructions[emul->instruction_total] = check;
 	emul->instruction_total++;
 }
-
+void glob_init(int sol_ct){
+	initscr();
+	glob_vars = createMap(16, &strHash, &strcmp_wrap, &defaultFree);
+	char* var_name = (char*) malloc(8);
+	memcpy(var_name, "WORLD_W", 8);
+	int* var_val = malloc(sizeof(int));
+	var_val[0] = COLS;
+	addPair(glob_vars, var_name, var_val);
+	var_name = (char*) malloc(8);
+	memcpy(var_name, "WORLD_H", 8);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = LINES;
+	addPair(glob_vars, var_name, var_val);
+	var_name = (char*) malloc(7);
+	memcpy(var_name, "SOL_CT", 7);
+	var_val = (int*) malloc(sizeof(int));
+	var_val[0] = sol_ct;
+	addPair(glob_vars, var_name, var_val);
+	endwin();
+}
 Soldier* translate(FILE* read){
 	Soldier* emul = malloc(sizeof(Soldier));
 	emul->instructions = malloc(sizeof(Instruction) * 256);
@@ -683,7 +776,7 @@ Soldier* translate(FILE* read){
 	//Instruction curr_inst = ({0};
 	int* curr_var = NULL;
 	unsigned char keyword_code = NO_KEYWORD;
-	HashMap* var_map = createMap(16, &strHash, &strcmp_wrap, &defaultFree);
+	HashMap* var_map = createMap(32, &strHash, &strcmp_wrap, &defaultFree);
 	//ADDING MAGIC MEMORY SPACES.
 	char* var_name = (char*) malloc(8);
 	memcpy(var_name, "TMP_RET", 8);
@@ -722,16 +815,15 @@ Soldier* translate(FILE* read){
 		// skip white space.
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
-		/*fprintf(stderr, "tokenized to %d tokens: \n[", tok_ct);
+		fprintf(stderr, "tokenized to %d tokens: \n[", tok_ct);
 		for (int j = 0; j < tok_ct; j++){
 			fprintf(stderr, "%s, ", tokens[j]);
 		}
-		fprintf(stderr, "]\n");*/
+		fprintf(stderr, "]\n");
 		if (tokens == NULL){
 			curr_line--;
 			continue;
 		}
-		int assign_ind = -1;
 		if (tok_ct == 0){
 			free(tokens);
 			continue;
