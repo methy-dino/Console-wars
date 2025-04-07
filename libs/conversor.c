@@ -86,9 +86,8 @@ void SOL_ATK(Soldier* soldier, void* args){
 	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
 	//fprintf(stderr, "movedir is: %d\n", move_dir);
-	char moveY = (move_dir == 2) - (move_dir == 0);
-	char moveX = (move_dir == 1) - (move_dir == 3);
-	attack_try(soldier, moveX, moveY);
+	attack_try(soldier, move_dir, soldier->vars[SOL_STAT] + 1);
+	soldier->vars[SOL_STAT] = 0;
 }
 void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
@@ -157,6 +156,15 @@ void SEEK(Soldier* soldier, void* args){
 	int y = convert->arg2;
 	seek_try(soldier,x,y);
 }
+void CHARGE(Soldier* soldier, void* args){
+	soldier->vars[SOL_STAT]++;
+}
+void SECURE(Soldier* soldier, void* args){
+	ONE_ARG* convert = (ONE_ARG*) args;
+	int dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	dir = dir % 4;
+	soldier->vars[TMP_RET] = game_secure(soldier, dir);
+}
 #define MEM_CP_IND 0
 #define CMP_IND 1
 #define JMP_IND 2
@@ -171,9 +179,11 @@ void SEEK(Soldier* soldier, void* args){
 #define DIV_IND 11
 #define MOD_IND 12
 #define SEEK_IND 13
+#define CHARGE_IND 14
+#define SECURE_IND 15
 #define DECLARATION 200
 #define NO_KEYWORD 201
-void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD, &SEEK};
+void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD, &SEEK, &CHARGE, &SECURE};
 int strcmp_wrap(void* a, void* b){
 	if (a == NULL || b == NULL){
 		return 1;

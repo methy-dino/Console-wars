@@ -248,17 +248,50 @@ void game_end(int C_PAIR){
 	while (getch() != ERR);
 	exit(0);
 }
-void attack_try(Soldier* user, int x_change, int y_change){
+int game_secure(Soldier* user, int dir){
+	// 1 FOR RED, 0 FOR BLUE.
+	char user_team = (user->vars[SOL_ID] > 0);
+	int x = user->vars[SOL_X];
+	int y = user->vars[SOL_Y];
+	int results = 0;
+	for (int i = 0; i < user->vars[SOL_STAT] + 1; i++){
+		y += (dir == 2) - (dir == 0);
+		if (y > board[ROW] || y < 0){
+			return 1;
+		}
+		x += (dir == 1) - (dir == 3);
+		if (x > board[COL] || x < 0){
+			return 1;
+		}
+		results = game_check_at(x,y);
+		if (((results > 0) == user_team) && results != INT_MIN && results != 0){
+			return 0;
+		}
+	}
+	return 1;
+}
+void attack_try(Soldier* user, int dir, int distance){
 	//fprintf(stderr, "attack attempt\n");
-	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
-		return;
-	}
-	if (user->vars[SOL_X] + x_change < 0 || user->vars[SOL_Y] + y_change < 0){
-		return;
-	}
-	int results = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
-		board[convert_1d(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change)] = 0;
-	atk_tiles[atk_ct] = convert_1d(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
+	int results = 0;
+	int x = user->vars[SOL_X];
+	int y = user->vars[SOL_Y];
+	while (distance > 0){
+		y += (dir == 2) - (dir == 0);
+		if (y > board[ROW]-1 || y < 0){
+			return;
+		}
+		x += (dir == 1) - (dir == 3);
+		if (x > board[COL]-1 || x < 0){
+			return;
+		}
+		results = game_check_at(x,y);
+		if (results != INT_MIN && results != 0){
+			break;
+		}
+		distance--;
+	}	
+	board[convert_1d(x, y)] = 0;
+	atk_tiles[atk_ct] = convert_1d(x, y);
 	atk_ct++;
 	if (results == INT_MIN || results == 0){
 		return;
