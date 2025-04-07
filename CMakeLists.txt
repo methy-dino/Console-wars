@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 4.0.0)
+project(C-wars)
+add_executable(${PROJECT_NAME} main.c libs/string.c libs/conversor.c libs/gameRules.c libs/hashMap.c)
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+target_link_libraries(C-wars ${CURSES_LIBRARIES})
+install(TARGETS C-wars DESTINATION bin)
