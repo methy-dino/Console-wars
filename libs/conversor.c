@@ -211,6 +211,10 @@ unsigned char check_keywords(char* buff){
 		return RAND_IND;
 	} else if (strcmp("CHECK", buff + i) == 0){
 		return CHECK_IND;
+	} else if (strcmp("SECURE", buff) == 0){
+		return SECURE_IND;
+	} else if (strcmp("CHARGE", buff) == 0){
+		return CHARGE_IND;
 	}
 	return NO_KEYWORD;
 }
@@ -453,14 +457,29 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 	emul->instructions[emul->instruction_total] = seek;
 	emul->instruction_total++;
 }
+void build_secure(Soldier* emul, char** tokens, HashMap* vars){
+	Instruction secure = (Instruction) {NULL, SECURE_IND};
+	secure.args = malloc(sizeof(ONE_ARG));
+	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
+		((ONE_ARG*)secure.args)->arg_mode = DATA_PTR;
+		((ONE_ARG*)secure.args)->arg = *(int*)getValue(vars, tokens[1]);
+	} else {
+		((ONE_ARG*)secure.args)->arg_mode = RAW_DATA;
+		((ONE_ARG*)secure.args)->arg = strtoimax(tokens[1], NULL, 10);
+		//fprintf(stderr, "got %d as atk arg", ((ONE_ARG*)move.args)->arg);
+	}
+	emul->instructions[emul->instruction_total] = secure;
+	emul->instruction_total++;
+}
 
 void inst_check(int curr, Instruction** lines, int* max){
 	if (curr < *max){
 		return;
 	}
-	int* lines_cp = malloc(sizeof(int) * (*max) * 2);
+	Instruction* lines_cp = malloc(sizeof(Instruction) * (*max) * 2);
 	memcpy(lines_cp, lines[0], (*max) * 2 * sizeof(Instruction));
 	*max = (*max) * 2;
+	lines[0] = lines_cp;
 }
 void line_check(int curr, int** lines, int* max){
 	if (curr < *max){
@@ -723,6 +742,15 @@ Soldier* translate(FILE* read){
 				// con_jmp adds 2 instructions, always.
 				inst_check(emul->instruction_total+1, &(emul->instructions), &max_inst);
 				build_con_jmp(var_map, emul, tokens);
+			} else if (keyword_code == CHARGE_IND){
+				if (tok_ct > 1){
+				fprintf(stdout, "CHARGE received arguments at line %d, it does not take arguments", curr_line);
+				}
+				emul->instructions[emul->instruction_total] = (Instruction) {NULL, CHARGE_IND};
+				emul->instruction_total++;
+			} else if (keyword_code == SECURE_IND){
+				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
+				build_secure(emul, tokens, var_map);
 			} else if (keyword_code == JMP_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				build_jmp(emul, tokens);
@@ -767,23 +795,7 @@ Soldier* translate(FILE* read){
 						fprintf(stderr, "INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
 					}
-					inst_check(emul->instruction_total+1,&(emul->instructions), &max_inst);
-					if (tok_ct > 3) {
-					} else {
-						TWO_ARGS* args = malloc(sizeof(TWO_ARGS));
-						args->arg1_mode = DATA_PTR;
-						args->arg1 = *var_val;
-						if (tokens[2][0] > '0'-1 && tokens[2][0] < '9'+1){
-							args->arg2_mode = RAW_DATA;
-							args->arg1 = strtoimax(tokens[2], NULL, 10);
-						} else {
-							args->arg1_mode = DATA_PTR;
-							args->arg1 = *(int*)getValue(var_map, tokens[2]);
-						}
-						emul->instructions[emul->instruction_total].instruction_id = MEM_CP_IND;
-						emul->instructions[emul->instruction_total].args = args;
-						emul->instruction_total++;
-					}
+					inst_check(emul->instruction_total+1,&(emul->instructions), &max_inst);	
 				}
 			}
 		} else if ((curr_var = getValue(var_map, tokens[i])) != NULL){
@@ -845,8 +857,32 @@ Soldier* translate(FILE* read){
 							emul->instructions[emul->instruction_total].args = args;
 							emul->instruction_total++;
 							break;
+						case CHARGE_IND:
+							emul->instructions[emul->instruction_total] = (Instruction) {NULL, CHARGE_IND};
+							emul->instruction_total++;
+							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
+							args= malloc(sizeof(TWO_ARGS));
+							args->arg1_mode = DATA_PTR;
+							args->arg1 = curr_var[0];
+							args->arg2_mode = DATA_PTR;
+							args->arg2 = TMP_RET;
+							emul->instructions[emul->instruction_total].args = args;
+							emul->instruction_total++;
+							break;
+						case SECURE_IND:
+							build_secure(emul, &tokens[2], var_map);
+							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
+							args= malloc(sizeof(TWO_ARGS));
+							args->arg1_mode = DATA_PTR;
+							args->arg1 = curr_var[0];
+							args->arg2_mode = DATA_PTR;
+							args->arg2 = TMP_RET;
+							emul->instructions[emul->instruction_total].args = args;
+							emul->instruction_total++;
+							break;
 						default:
 							printf("INVALID MEMORY ASSERT!");
+							exit(0);
 							break;
 					}
 				} else {

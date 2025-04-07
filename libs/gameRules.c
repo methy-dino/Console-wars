@@ -266,6 +266,8 @@ int game_secure(Soldier* user, int dir){
 		results = game_check_at(x,y);
 		if (((results > 0) == user_team) && results != INT_MIN && results != 0){
 			return 0;
+		} else if (((results > 0) != user_team) && results != INT_MIN && results != 0) {
+		return 1;
 		}
 	}
 	return 1;
