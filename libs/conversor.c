@@ -7,44 +7,6 @@
 #include "conversor.h"
 #include <inttypes.h>
 HashMap* glob_vars = NULL;
-/*typedef struct arg_std_a {
-	char arg_mode;
-	int arg;
-} ONE_ARG;
-typedef struct arg_std_b {
-	char arg1_mode;
-	char arg2_mode;
-	int arg1;
-	int arg2;
-} TWO_ARGS;
-typedef struct cmp_arg_std {
-	unsigned char comparison;
-	char arg1_mode;
-	char arg2_mode;
-	int arg1;
-	int arg2;
-} CMP_ARGS;
-typedef struct instruc {
-	void* args;
-	char instruction_id;
-} Instruction;
-#define TMP_RET 0
-#define TMP_MATH 1
-#define SOL_X 2
-#define SOL_Y 3
-#define SOL_STAT 4
-#define DATA_PTR 'p'
-#define RAW_DATA 'r'
-#define EQUAL 1
-//#define DIFFERENT 2
-#define BIGGER 4
-#define SMALLER 8
-typedef struct soldier {
-	int vars[32];
-	Instruction* instructions;
-	int instruction_total;
-	int curr;
-} Soldier;*/
 void MEM_CP(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
 	int receive = convert->arg1;
@@ -226,6 +188,39 @@ char is_math(char* str){
 char is_comparator(char* str){
 	return str[0] == '=' && (str[1] == '=' || str[1] == '>' || str[1] == '<');	
 }
+// starts after the function name i.e. "RAND 0 1", should receive "0 1"
+void fn_tok(char* start, char*** tokens, unsigned char* tok_ct){
+	unsigned int curr = 0;
+	unsigned int prev = 0;
+	while (start[curr] != '\0' && start[curr] != '\n'){
+		while (start[curr] == ' ' || start[curr] == '	'){
+			curr++;
+		}
+		prev = curr;
+		while ((start[curr] == '=' || start[curr] == '>' || start[curr] == '<') && start[curr] != '\0' && start[curr] != '\n'){
+			curr++;
+			//printf("fntok entered lloop symbol\n");
+		}
+		if (curr != prev){
+			tokens[0][*tok_ct] = malloc(sizeof(char) * (curr-prev+1));
+			memcpy(tokens[0][*tok_ct], start+prev, curr-prev);
+			tokens[0][*tok_ct][curr-prev] = '\0';
+			(*tok_ct)++;
+		}
+		prev = curr;
+		while (start[curr] != ' ' && start[curr] != '	' && start[curr] != '=' && start[curr] != '>' && start[curr] != '<' && start[curr] != '\0' && start[curr] != '\n'){
+			//printf("fntok entered char symbol\n");
+			curr++;
+		}
+		if (curr != prev){
+			//printf("fntok created token\n");
+			tokens[0][*tok_ct] = malloc(sizeof(char) * (curr-prev+1));
+			memcpy(tokens[0][*tok_ct], start+prev, curr-prev);
+			tokens[0][*tok_ct][curr-prev] = '\0';
+			(*tok_ct)++;
+		}
+	}
+}
 char** tokenize(char* raw, unsigned char* token_count){
 	unsigned int prev = 0;
 	unsigned int curr = 0;
@@ -233,7 +228,7 @@ char** tokenize(char* raw, unsigned char* token_count){
 		curr++;
 	}
 	if (raw[curr] == '#'){
-		return NULL;
+		return 0;
 	}
 	char last_sym = 0;
 	char** tokens = malloc(sizeof(char*) * 20);
@@ -333,6 +328,11 @@ char** tokenize(char* raw, unsigned char* token_count){
 			}*/
 			tokens[*token_count][curr-prev] = '\0';
 			token_count[0]++;
+			if (check_keywords(tokens[(*token_count)-1]) != NO_KEYWORD){
+				//printf("called fn_tok\n");
+				fn_tok(&raw[curr],&tokens,token_count);
+				return tokens;
+			}
 			if (token_count[0] == max_token){
 				fprintf(stderr, "TOO MANY TOKENS!\n");
 				exit(0);
@@ -344,42 +344,43 @@ char** tokenize(char* raw, unsigned char* token_count){
 	}
 	return tokens;
 }
+int convert_arg(char* token, char* arg_mode, HashMap* var_mp){
+	int* var = NULL;
+	if ((token[0] > '0'-1 && token[0] < '9'+1) || token[0] == '-' || token[0] == '+'){
+		*arg_mode = RAW_DATA;
+		return strtoimax(token, NULL, 10);
+  } else if ((var = (int*) getValue(var_mp, token)) != NULL){
+		*arg_mode = DATA_PTR;
+		return *var;
+	} else if ((var = (int*) getValue(glob_vars, token)) != NULL){
+		*arg_mode = RAW_DATA;
+		return *var;
+	} else {
+		printf("ARGUMENT CONVERSION ERROR\n");
+		exit(0);
+	}
+}
 void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
-	int* var;
 	Instruction cmp = (Instruction) {NULL, CMP_IND}; 
 	Instruction jmp = (Instruction) {NULL, CON_JMP_IND};
+	jmp.args = malloc(sizeof(ONE_ARG));
+	cmp.args = malloc(sizeof(CMP_ARGS));
+
 	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
 		fprintf(stderr, "CON_GOTO malformed, argument 1 is NOT A NUMBER!\n");
 		exit(0);
 	}
 	int curr_i = 1;
+	char md = 0;
 	jmp.args = malloc(sizeof(ONE_ARG));
 	((ONE_ARG*)jmp.args)->arg_mode = RAW_DATA;
 	((ONE_ARG*)jmp.args)->arg = strtoimax(tokens[curr_i], NULL, 10);
 	curr_i++;
-	cmp.args = malloc(sizeof(CMP_ARGS));
-	if ((var = (int*) getValue(var_mp, tokens[curr_i])) != NULL){
-		((CMP_ARGS*)cmp.args)->arg1 = *var;
-		((CMP_ARGS*)cmp.args)->arg1_mode = DATA_PTR;
-		curr_i++;
-	} else if ((var = (int*) getValue(glob_vars, tokens[curr_i])) != NULL){
-		((CMP_ARGS*)cmp.args)->arg1 = *var;
-		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
-	} else if (!(tokens[curr_i+1][0] < '0' || tokens[curr_i+1][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
-		if (tokens[curr_i][0] == '+'){
-			((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[curr_i+1], NULL, 10);
-			((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
-		} else {
-			((CMP_ARGS*)cmp.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
-			((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
-		}
-		curr_i += 2;
-	} else {
-		printf("CON_GOTO malformed, invalid comparison\n");
-		exit(0);
-	}
-//	printf("cmp arg 1 done\n");
+	((CMP_ARGS*)cmp.args)->arg1 = convert_arg(tokens[curr_i], &md, var_mp);
+	((CMP_ARGS*)cmp.args)->arg1_mode = md;
+	curr_i++;
 	unsigned char mode = '\0';
+
 	if (tokens[curr_i][0] == '='){
 		mode = mode | EQUAL;
 	} else if (tokens[curr_i][0] == '>'){
@@ -402,25 +403,8 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 //printf("mode %d \n", mode);
 	//printf("cmp comparison done.\n");
 	((CMP_ARGS*)cmp.args)->comparison = mode;
-	if ((var = (int*) getValue(var_mp, tokens[curr_i])) != NULL){
-		((CMP_ARGS*)cmp.args)->arg2 = *var;
-		((CMP_ARGS*)cmp.args)->arg2_mode = DATA_PTR;
-		curr_i++;
-	} else if ((var = (int*) getValue(glob_vars, tokens[curr_i])) != NULL){
-		((CMP_ARGS*)cmp.args)->arg2 = *var;
-		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-	} else if (!(tokens[curr_i+1][0] < '0' || tokens[curr_i+1][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
-		if (tokens[curr_i][0] == '+'){
-			((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i+1], NULL, 10);
-			((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-		} else {
-			((CMP_ARGS*)cmp.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
-			((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-		}
-	} else {
-		printf("CON_GOTO malformed, invalid comparison\n");
-		exit(0);
-	}
+  ((CMP_ARGS*)cmp.args)->arg2 = convert_arg(tokens[curr_i], &md, var_mp);
+	((CMP_ARGS*)cmp.args)->arg2_mode = md;
 	emul->instructions[emul->instruction_total] = cmp;
 	emul->instruction_total++;
 	emul->instructions[emul->instruction_total] = jmp;
@@ -428,7 +412,7 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 }
 void build_jmp(Soldier* emul, char** tokens){
 	Instruction jmp = (Instruction) {NULL, JMP_IND};
-	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
+	if ((tokens[1][0] < '0' || tokens[1][0] > '9') && tokens[1][0] != '+'){
 		printf("GOTO malformed, argument 1 is NOT A NUMBER!\n");
 		exit(0);
 	}	
@@ -438,45 +422,21 @@ void build_jmp(Soldier* emul, char** tokens){
 	emul->instructions[emul->instruction_total] = jmp;
 	emul->instruction_total++;
 }
-void build_move(Soldier* emul, char** tokens, HashMap* vars){
+void build_move(Soldier* emul, char** tokens, HashMap* var_mp){
 	Instruction move = (Instruction) {NULL, SOL_MOVE_IND};
-	int* var = NULL;
 	move.args = malloc(sizeof(ONE_ARG));
-	if (tokens[1][0] > '0'+1 && tokens[1][0] < '9'+1){
-		((ONE_ARG*)move.args)->arg_mode = RAW_DATA;
-		((ONE_ARG*)move.args)->arg = strtoimax(tokens[1], NULL, 10);
-	} else if ((var = (int*) getValue(glob_vars, tokens[1])) != NULL){
-		printf("BUUUUH %d\n", *var);
-		((ONE_ARG*)move.args)->arg = *var;
-		((ONE_ARG*)move.args)->arg_mode = RAW_DATA;
-	} else if ((var = (int*) getValue(vars, tokens[1])) != NULL){
-		printf("HOW %d\n", *var);
-		((ONE_ARG*)move.args)->arg_mode = DATA_PTR;
-		((ONE_ARG*)move.args)->arg = *var;
-		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
-	} else {
-		fprintf(stderr, "argument one of MOVE not recognized\n");
-	}
+	char md = 0;
+	((ONE_ARG*)move.args)->arg = convert_arg(tokens[1], &md, var_mp);
+	((ONE_ARG*)move.args)->arg_mode = md;
 	emul->instructions[emul->instruction_total] = move;
 	emul->instruction_total++;
 }
-void build_atk(Soldier* emul, char** tokens, HashMap* vars){
+void build_atk(Soldier* emul, char** tokens, HashMap* var_mp){
 	Instruction atk = (Instruction) {NULL, SOL_ATK_IND};
 	atk.args = malloc(sizeof(ONE_ARG));
-	int* var = NULL;
-	if (tokens[1][0] > '0'+1 && tokens[1][0] < '9'+1){
-		((ONE_ARG*)atk.args)->arg_mode = RAW_DATA;
-		((ONE_ARG*)atk.args)->arg = strtoimax(tokens[1], NULL, 10);
-	} else if ((var = (int*) getValue(glob_vars, tokens[1])) != NULL){
-		((ONE_ARG*)atk.args)->arg = *var;
-		((ONE_ARG*)atk.args)->arg_mode = RAW_DATA;
-	} else if ((var = (int*) getValue(vars, tokens[1])) != NULL){
-		((ONE_ARG*)atk.args)->arg_mode = DATA_PTR;
-		((ONE_ARG*)atk.args)->arg = *var;
-		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
-	} else {
-		fprintf(stderr, "argument one of ATTACK not recognized\n");
-	}
+	char md = 0;
+	((ONE_ARG*)atk.args)->arg = convert_arg(tokens[1], &md, var_mp);
+	((ONE_ARG*)atk.args)->arg_mode = md;
 	emul->instructions[emul->instruction_total] = atk;
 	emul->instruction_total++;
 }
@@ -507,23 +467,12 @@ void build_seek(Soldier* emul, char** tokens, HashMap* vars){
 	emul->instructions[emul->instruction_total] = seek;
 	emul->instruction_total++;
 }
-void build_secure(Soldier* emul, char** tokens, HashMap* vars){
+void build_secure(Soldier* emul, char** tokens, HashMap* var_mp){
 	Instruction secure = (Instruction) {NULL, SECURE_IND};
 	secure.args = malloc(sizeof(ONE_ARG));
-	int* var = NULL;
-	if (tokens[1][0] > '0'+1 && tokens[1][0] < '9'+1){
-		((ONE_ARG*)secure.args)->arg_mode = RAW_DATA;
-		((ONE_ARG*)secure.args)->arg = strtoimax(tokens[1], NULL, 10);
-	} else if ((var = (int*) getValue(glob_vars, tokens[1])) != NULL){
-		((ONE_ARG*)secure.args)->arg = *var;
-		((ONE_ARG*)secure.args)->arg_mode = RAW_DATA;
-	} else if ((var = (int*) getValue(vars, tokens[1])) != NULL){
-		((ONE_ARG*)secure.args)->arg_mode = DATA_PTR;
-		((ONE_ARG*)secure.args)->arg = *var;
-		//fprintf(stderr, "got %d as move arg", ((ONE_ARG*)move.args)->arg);
-	} else {
-		fprintf(stderr, "argument one of SECURE not recognized\n");
-	}
+	char md = 0;
+	((ONE_ARG*)secure.args)->arg = convert_arg(tokens[1], &md, var_mp);
+	((ONE_ARG*)secure.args)->arg_mode = md;
 	emul->instructions[emul->instruction_total] = secure;
 	emul->instruction_total++;
 }
@@ -620,129 +569,26 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 		i++;
 	}
 }
-void build_rand(HashMap* var_map, Soldier* emul, char** tokens){
+void build_rand(HashMap* var_mp, Soldier* emul, char** tokens){
 	Instruction rand = (Instruction) {NULL, RAND_IND};
 	rand.args = malloc(sizeof(TWO_ARGS));
-	int* var = NULL;
-	int curr_i = 1;
-	//printf("aaa\n");
-	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
-		((TWO_ARGS*)rand.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
-		((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
-		curr_i++;
-	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
-		if (tokens[curr_i][0] == '+'){
-			((TWO_ARGS*)rand.args)->arg1 = strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
-		} else {
-			((TWO_ARGS*)rand.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
-		}
-		curr_i+=2;
-	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
-		//printf("AAAA\n");
-		((TWO_ARGS*)rand.args)->arg1 = *var;
-		((TWO_ARGS*)rand.args)->arg1_mode = DATA_PTR;
-		curr_i++;
-	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
-		((TWO_ARGS*)rand.args)->arg1 = *var;
-		((TWO_ARGS*)rand.args)->arg1_mode = RAW_DATA;
-		curr_i++;
-	} else {
-		printf("RAND malformed, invalid arguments\n");
-		exit(0);
-	}
-	//printf("bbb\n");
-	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
-		((TWO_ARGS*)rand.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
-		((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
-		curr_i++;
-	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
-		if (tokens[curr_i][0] == '+'){
-			((TWO_ARGS*)rand.args)->arg2 = strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
-		} else {
-			((TWO_ARGS*)rand.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
-		}
-		curr_i+=2;
-	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
-		//printf("AAAA\n");
-		((TWO_ARGS*)rand.args)->arg2 = *var;
-		((TWO_ARGS*)rand.args)->arg2_mode = DATA_PTR;
-		curr_i++;
-	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
-		((TWO_ARGS*)rand.args)->arg2 = *var;
-		((TWO_ARGS*)rand.args)->arg2_mode = RAW_DATA;
-		curr_i++;
-	} else {
-		printf("RAND malformed, invalid arguments\n");
-		exit(0);
-	}
-	//printf("ccc\n");
+	char md = 0;
+	((TWO_ARGS*)rand.args)->arg1 = convert_arg(tokens[1], &md, var_mp);
+	((TWO_ARGS*)rand.args)->arg1_mode = md;
+	((TWO_ARGS*)rand.args)->arg2 = convert_arg(tokens[2], &md, var_mp);
+	((TWO_ARGS*)rand.args)->arg2_mode = md;	
 	emul->instructions[emul->instruction_total] = rand;
 	emul->instruction_total++;
 }
-void build_check(HashMap* var_map, Soldier* emul, char** tokens){
+void build_check(HashMap* var_mp, Soldier* emul, char** tokens){
 	Instruction check = (Instruction) {NULL, CHECK_IND};
 	check.args = malloc(sizeof(TWO_ARGS));
-	int* var = NULL;
-	int curr_i = 1;
+	char md = 0;
 	//printf("aaa\n");
-	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
-		((TWO_ARGS*)check.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
-		((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
-		curr_i++;
-	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
-		if (tokens[curr_i][0] == '+'){
-			((TWO_ARGS*)check.args)->arg1 = strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
-		} else {
-			((TWO_ARGS*)check.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
-		}
-		curr_i+=2;
-	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
-		//printf("AAAA\n");
-		((TWO_ARGS*)check.args)->arg1 = *var;
-		((TWO_ARGS*)check.args)->arg1_mode = DATA_PTR;
-		curr_i++;
-	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
-		((TWO_ARGS*)check.args)->arg1 = *var;
-		((TWO_ARGS*)check.args)->arg1_mode = RAW_DATA;
-		curr_i++;
-	} else {
-		printf("RAND malformed, invalid arguments\n");
-		exit(0);
-	}
-	//printf("bbb\n");
-	if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9')){
-		((TWO_ARGS*)check.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
-		((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
-		curr_i++;
-	} else if ((tokens[curr_i+1][0] > '0'-1 && tokens[curr_i+1][0] < '9'-1) &&(tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+')){
-		if (tokens[curr_i][0] == '+'){
-			((TWO_ARGS*)check.args)->arg2 = strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
-		} else {
-			((TWO_ARGS*)check.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
-			((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
-		}
-		curr_i+=2;
-	} else if ((var = (int*)getValue(var_map, tokens[curr_i])) != NULL){
-		//printf("AAAA\n");
-		((TWO_ARGS*)check.args)->arg2 = *var;
-		((TWO_ARGS*)check.args)->arg2_mode = DATA_PTR;
-		curr_i++;
-	} else if ((var = (int*)getValue(glob_vars, tokens[curr_i])) != NULL){
-		((TWO_ARGS*)check.args)->arg2 = *var;
-		((TWO_ARGS*)check.args)->arg2_mode = RAW_DATA;
-		curr_i++;
-	} else {
-		printf("RAND malformed, invalid arguments\n");
-		exit(0);
-	}
-	//printf("ccc\n");
+	((TWO_ARGS*)check.args)->arg1 = convert_arg(tokens[1], &md, var_mp);
+	((TWO_ARGS*)check.args)->arg1_mode = md;
+	((TWO_ARGS*)check.args)->arg2 = convert_arg(tokens[2], &md, var_mp);
+	((TWO_ARGS*)check.args)->arg2_mode = md;	
 	emul->instructions[emul->instruction_total] = check;
 	emul->instruction_total++;
 }

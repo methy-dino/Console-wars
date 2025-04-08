@@ -410,14 +410,14 @@ int move_try(Soldier* soldier, int x_change, int y_change){
 		return 1;
 	}
 	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change); 
-	if (results != INT_MIN){
+	if (results != INT_MIN && results != 0){
 		//fprintf(stderr, "move try failed, space occupied\n");
 		return 1;
 	}
 	game_move_to(soldier->vars[SOL_X], soldier->vars[SOL_Y], soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change, soldier);
 	return 0;
 }
-void game_step(){
+void game_step() {
 	for (int j = 0; j < base_ct; j++){
 		RUN(&red_team[j]);
 		RUN(&blue_team[j]);
