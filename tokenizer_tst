@@ -1,6 +1,7 @@
 LET a
-a = 1
+a = -1
+a = a + 3
 a = CHECK a 0
 MOVE -1
 RAND -1 -3
-GOTO -3 
+GOTO 0 
