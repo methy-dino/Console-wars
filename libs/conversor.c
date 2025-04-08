@@ -349,15 +349,11 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 	Instruction cmp = (Instruction) {NULL, CMP_IND}; 
 	Instruction jmp = (Instruction) {NULL, CON_JMP_IND};
 	if (tokens[1][0] < '0' || tokens[1][0] > '9'){
-		printf("CON_GOTO malformed, argument 1 is NOT A NUMBER!\n");
+		fprintf(stderr, "CON_GOTO malformed, argument 1 is NOT A NUMBER!\n");
 		exit(0);
 	}
 	int curr_i = 1;
 	jmp.args = malloc(sizeof(ONE_ARG));
-	if (tokens[curr_i][0] == '-'){
-		fprintf(stderr, "CON GOTO WITH NEGATIVE INDEX\n");
-		exit(0);
-	}
 	((ONE_ARG*)jmp.args)->arg_mode = RAW_DATA;
 	((ONE_ARG*)jmp.args)->arg = strtoimax(tokens[curr_i], NULL, 10);
 	curr_i++;
@@ -369,10 +365,15 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 	} else if ((var = (int*) getValue(glob_vars, tokens[curr_i])) != NULL){
 		((CMP_ARGS*)cmp.args)->arg1 = *var;
 		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
-	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
-		((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[curr_i], NULL, 10);
-		((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
-		curr_i++;
+	} else if (!(tokens[curr_i+1][0] < '0' || tokens[curr_i+1][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
+		if (tokens[curr_i][0] == '+'){
+			((CMP_ARGS*)cmp.args)->arg1 = strtoimax(tokens[curr_i+1], NULL, 10);
+			((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
+		} else {
+			((CMP_ARGS*)cmp.args)->arg1 = -strtoimax(tokens[curr_i+1], NULL, 10);
+			((CMP_ARGS*)cmp.args)->arg1_mode = RAW_DATA;
+		}
+		curr_i += 2;
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
@@ -408,10 +409,14 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 	} else if ((var = (int*) getValue(glob_vars, tokens[curr_i])) != NULL){
 		((CMP_ARGS*)cmp.args)->arg2 = *var;
 		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-	} else if (!(tokens[curr_i][0] < '0' || tokens[curr_i][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
-		((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i], NULL, 10);
-		((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
-		curr_i++;
+	} else if (!(tokens[curr_i+1][0] < '0' || tokens[curr_i+1][0] > '9') || tokens[curr_i][0] == '-' || tokens[curr_i][0] == '+'){
+		if (tokens[curr_i][0] == '+'){
+			((CMP_ARGS*)cmp.args)->arg2 = strtoimax(tokens[curr_i+1], NULL, 10);
+			((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
+		} else {
+			((CMP_ARGS*)cmp.args)->arg2 = -strtoimax(tokens[curr_i+1], NULL, 10);
+			((CMP_ARGS*)cmp.args)->arg2_mode = RAW_DATA;
+		}
 	} else {
 		printf("CON_GOTO malformed, invalid comparison\n");
 		exit(0);
@@ -832,6 +837,10 @@ Soldier* translate(FILE* read){
 			//printf("keyword code = %d\n", keyword_code); 
 			if (keyword_code == CON_JMP_IND){
 				// con_jmp adds 2 instructions, always.
+				if (tok_ct < 5){
+					fprintf(stderr, "at line %d, CON_GOTO has insufficient args\n", curr_line);
+					exit(0);
+				}
 				inst_check(emul->instruction_total+1, &(emul->instructions), &max_inst);
 				build_con_jmp(var_map, emul, tokens);
 			} else if (keyword_code == CHARGE_IND){
@@ -841,19 +850,38 @@ Soldier* translate(FILE* read){
 				emul->instructions[emul->instruction_total] = (Instruction) {NULL, CHARGE_IND};
 				emul->instruction_total++;
 			} else if (keyword_code == SECURE_IND){
+				if (tok_ct != 2){
+					fprintf(stderr, "at line %d SECURE has malformed arguments\n", curr_line);
+					exit(0);
+				}
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				build_secure(emul, tokens, var_map);
 			} else if (keyword_code == JMP_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
+				if (tok_ct != 2){
+				fprintf(stderr, "at line %d GOTO has malformed arguments\n", curr_line);
+				}
 				build_jmp(emul, tokens);
 			} else if (keyword_code == RAND_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
+				if (tok_ct < 3){
+					fprintf(stderr, "at line %d RAND has insufficient arguments\n", curr_line);
+					exit(0);
+				}
 				build_rand(var_map, emul, tokens);
 			} else if (keyword_code == CHECK_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
+				if (tok_ct < 3){
+					fprintf(stderr, "at line %d CHECK has insufficient arguments\n", curr_line);
+					exit(0);
+				}
 				build_check(var_map, emul, tokens);
 			} else if (keyword_code == SEEK_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
+				if (tok_ct != 3) {
+					fprintf(stderr, "at line %d SECURE has malformed arguments\n", curr_line);
+					exit(0);
+				}
 				build_seek(emul, tokens, var_map);
 			} else if (keyword_code == SOL_ATK_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
@@ -883,11 +911,8 @@ Soldier* translate(FILE* read){
 					var_ind++;
 //printf("test\n");
 				if (tok_ct > 2){
-					if (strcmp(tokens[2], "=")){
-						fprintf(stderr, "INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
-						exit(0);
-					}
-					inst_check(emul->instruction_total+1,&(emul->instructions), &max_inst);	
+					fprintf(stderr, "invalid variable declaration\n");
+					exit(0);
 				}
 			}
 		} else if ((curr_var = getValue(var_map, tokens[i])) != NULL){
