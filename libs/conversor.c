@@ -707,6 +707,7 @@ Soldier* translate(FILE* read){
 				if (tok_ct != 2){
 				fprintf(stderr, "at line %d GOTO has malformed arguments\n", curr_line);
 				}
+				printf("line %d aaa\n", curr_line);
 				build_jmp(emul, tokens);
 			} else if (keyword_code == RAND_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
@@ -888,6 +889,10 @@ Soldier* translate(FILE* read){
 	fprintf(stdout, "compiled to %d instructions: \n", emul->instruction_total);
 	for (int i = 0; i < emul->instruction_total; i++){
 		if (emul->instructions[i].instruction_id == JMP_IND || emul->instructions[i].instruction_id == CON_JMP_IND){
+			if (((ONE_ARG*)emul->instructions[i].args)->arg >= curr_line){
+				fprintf(stderr, "GOTO OR CON_GOTO linking to non-existant line\n");
+				exit(0);
+			}
 			((ONE_ARG*)emul->instructions[i].args)->arg = line_relation[((ONE_ARG*)emul->instructions[i].args)->arg]-1;
 		}
 		fprintf(stdout, "%dth - ID: %d \n", i, emul->instructions[i].instruction_id);
