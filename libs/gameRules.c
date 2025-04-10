@@ -305,6 +305,7 @@ void attack_try(Soldier* user, int dir, int distance){
 		blue_team[-(results+1)].curr = -2;
 		blue_ct--;
 	}
+	//fprintf(stderr, "blue count: %d, red count: %d\n", blue_ct, red_ct);
 	if (red_ct == 0){
 			game_end(BLUE_WIN);
 	}

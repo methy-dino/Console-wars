@@ -666,11 +666,11 @@ Soldier* translate(FILE* read){
 		// skip white space.
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
-		fprintf(stderr, "tokenized to %d tokens: \n[", tok_ct);
+		fprintf(stdout, "tokenized to %d tokens: \n[", tok_ct);
 		for (int j = 0; j < tok_ct; j++){
-			fprintf(stderr, "%s, ", tokens[j]);
+			fprintf(stdout, "%s, ", tokens[j]);
 		}
-		fprintf(stderr, "]\n");
+		fprintf(stdout, "]\n");
 		if (tokens == NULL){
 			curr_line--;
 			continue;
@@ -683,8 +683,8 @@ Soldier* translate(FILE* read){
 			//printf("keyword code = %d\n", keyword_code); 
 			if (keyword_code == CON_JMP_IND){
 				// con_jmp adds 2 instructions, always.
-				if (tok_ct < 5){
-					fprintf(stderr, "at line %d, CON_GOTO has insufficient args\n", curr_line);
+				if (tok_ct != 5){
+					fprintf(stderr, "at line %d, CON_GOTO has malformed args\n", curr_line);
 					exit(0);
 				}
 				inst_check(emul->instruction_total+1, &(emul->instructions), &max_inst);
@@ -705,21 +705,20 @@ Soldier* translate(FILE* read){
 			} else if (keyword_code == JMP_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				if (tok_ct != 2){
-				fprintf(stderr, "at line %d GOTO has malformed arguments\n", curr_line);
+					fprintf(stderr, "at line %d GOTO has malformed arguments\n", curr_line);
 				}
-				printf("line %d aaa\n", curr_line);
 				build_jmp(emul, tokens);
 			} else if (keyword_code == RAND_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
-				if (tok_ct < 3){
-					fprintf(stderr, "at line %d RAND has insufficient arguments\n", curr_line);
+				if (tok_ct != 3){
+					fprintf(stderr, "at line %d RAND has malformed arguments\n", curr_line);
 					exit(0);
 				}
 				build_rand(var_map, emul, tokens);
 			} else if (keyword_code == CHECK_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
-				if (tok_ct < 3){
-					fprintf(stderr, "at line %d CHECK has insufficient arguments\n", curr_line);
+				if (tok_ct != 3){
+					fprintf(stderr, "at line %d CHECK has malformed arguments\n", curr_line);
 					exit(0);
 				}
 				build_check(var_map, emul, tokens);
@@ -734,14 +733,14 @@ Soldier* translate(FILE* read){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				if (tok_ct != 2){
-					fprintf(stderr, "IMPROPER ATTACK CALL SYNTAX\n");
+					fprintf(stderr, "at line %d ATTACK has malformed arguments\n", curr_line);
 					exit(0);
 				}
 				build_atk(emul, tokens, var_map);
 			} else if (keyword_code == SOL_MOVE_IND){
 				inst_check(emul->instruction_total, &(emul->instructions), &max_inst);
 				if (tok_ct != 2){
-					fprintf(stderr, "IMPROPER MOVE CALL SYNTAX\n");
+					fprintf(stderr, "at line %d MOVE has malformed arguments\n", curr_line);
 					exit(0);
 				}
 				//DONE: move builder.
@@ -757,8 +756,8 @@ Soldier* translate(FILE* read){
 					addPair(var_map, var_name, var_val);
 					var_ind++;
 //printf("test\n");
-				if (tok_ct > 2){
-					fprintf(stderr, "invalid variable declaration\n");
+				if (tok_ct != 2){
+					fprintf(stderr, "at line %d, invalid variable declaration\n", curr_line);
 					exit(0);
 				}
 			}
