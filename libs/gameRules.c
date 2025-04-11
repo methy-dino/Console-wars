@@ -10,7 +10,7 @@
 #define BLUE_TEAM 3
 #define BLUE_WIN 4
 #define ATK_COL 5
-//board of all soldiers
+/*board of all soldiers*/
 int* board = NULL;
 int red_ct = 0;
 int blue_ct = 0;
@@ -19,9 +19,8 @@ int* atk_tiles;
 int atk_ct;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
-// returns the soldier at the set coordinates.
+/* returns the soldier at the set coordinates.*/
 int game_check_at(int x, int y){
-	//printf("checking index: %d\n", 2+x*board[COL]+y*board[ROW]);
 	return board[2+x+y*board[COL]];
 }
 int convert_1d(int x, int y){
@@ -33,18 +32,18 @@ unsigned int timer = 0;
 void display_update(char flush_c){
 	if (paused == 0 || flush_c == 1){
 		move(0,0);
-		for (unsigned int y = 0; y < board[ROW]; y++){
-			for (unsigned int x = 0; x < board[COL]; x++){
+		unsigned int y = 0;
+		unsigned int x = 0; 
+		for (y = 0; y < board[ROW]; y++){
+			for (x = 0; x < board[COL]; x++){
 				if (board[convert_1d(x,y)] != INT_MIN){
 					if (board[convert_1d(x,y)] == 0){
 						attron(COLOR_PAIR(ATK_COL));
 						printw("~");
 					} else { 
 						if (board[convert_1d(x,y)] > 0){
-							//printf("found red at: %d, %d\n",x,y);
 							attron(COLOR_PAIR(RED_TEAM));
 						} else {
-							//printf("found blue at: %d, %d\n",x,y);
 							attron(COLOR_PAIR(BLUE_TEAM));
 						}
 						printw("#");
@@ -54,10 +53,11 @@ void display_update(char flush_c){
 				}
 			}
 		}
-		for (int i = 0; i < atk_ct; i++){
+		int i = 0;
+		for (i = 0; i < atk_ct; i++){
 			board[atk_tiles[i]] = INT_MIN;	
 		}
-		atk_ct=0;
+		atk_ct = 0;
 	} else {
 		move(0,0);
 		pause_show += 17;
@@ -68,17 +68,16 @@ void display_update(char flush_c){
 			if (pause_show > 2000){
 				pause_show = 0;
 			}
-			for (int i = 0; i < 7; i++){
+			int i = 0;
+			for (i = 0; i < 7; i++){
 				if (board[i+2] != INT_MIN){
 					if (board[i+2] == 0){
 						attron(COLOR_PAIR(ATK_COL));
 						printw("~");
 					} else { 
 						if (board[i+2] > 0){
-							//printf("found red at: %d, %d\n",x,y);
 							attron(COLOR_PAIR(RED_TEAM));
 						} else {
-							//printf("found blue at: %d, %d\n",x,y);
 							attron(COLOR_PAIR(BLUE_TEAM));
 						}
 						printw("#");
@@ -111,11 +110,9 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		exit(0);
 	}
 	board = malloc((COLS * LINES + 2) * sizeof(int));
-	//printf("allocated %d ints", COLS * LINES + 2);
-	for (int i = 2; i < COLS * LINES + 2; i++){
-		//printf("%d i\n", i);
+	int i;
+	for (i = 2; i < COLS * LINES + 2; i++){
 		board[i] = INT_MIN;
-		//printf("huh %d\n", i);
 	}
 	printf("COLS: %d LINES: %d\n", COLS, LINES);
 	board[COL] = COLS;
@@ -127,15 +124,13 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		}
 		printf("]\n");
 	}*/
-	//getting closest square size
+	/*getting closest square size*/
 	char side = 1;
 	while (side*side < soldier_count){
 		side++;
 	}
-	//printf("starting soldier creation\n");
 	atk_tiles = malloc(sizeof(int) * soldier_count * 2);
 	red_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
-    //printf("allocated: %d bytes", 
 	blue_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
 	red_ct = soldier_count;
 	blue_ct = soldier_count;
@@ -146,51 +141,41 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		red_team[soldier_count-1].vars[SOL_ID] = soldier_count;
 		blue_team[soldier_count-1] = *blue_team_snippet;
 		blue_team[soldier_count-1].vars[SOL_ID] = -soldier_count;
-		//printf("id ref; %d\n", soldier_count);
 		soldier_count--;
-		//printf("%d sols remaining\n", soldier_count);
 	}
-	//TODO do placing logic.
     count_cp--;
 	int row = 0;
 	int col = 0;
-	for (int i = 0; i < side; i++){
+	for (i = 0; i < side; i++){
 		if (count_cp == -1){
 			break;
 		}
-		for (int j = 0; j < side; j++){
-			//places at upper left.
-			//printf("id; %d \n", red_team[count_cp-1].vars[SOL_ID]); 
+		int j = 0;
+		for (j = 0; j < side; j++){
+			/*places at upper left.*/
 			board[convert_1d(col, row)] = red_team[count_cp].vars[SOL_ID];
 			red_team[count_cp].vars[SOL_X] = col;
 			red_team[count_cp].vars[SOL_Y] = row;
-			//printf("red inset %d with id: %d as index of list number %d\n", convert_1d(row, col), red_team[count_cp].vars[SOL_ID], count_cp); 
-			// places at bottom right.
+			/* places at bottom right.*/
 			board[convert_1d(board[COL] - col-1, board[ROW]-row-1)] = blue_team[count_cp].vars[SOL_ID];
 			blue_team[count_cp].vars[SOL_X] = board[COL]-col-1;
 			blue_team[count_cp].vars[SOL_Y] = board[ROW]-row-1;
-			//printf("blu inset %d with id: %d as index of list number %d\n", convert_1d(board[COL] - col-1, board[ROW]-row-1), blue_team[count_cp].vars[SOL_ID], count_cp); 
 			count_cp--;
 			col++;
 			if (count_cp == -1){
 				break;
 			}
 		}	
-		//reset X modifier and change Y modifier.
+		/*reset X modifier and change Y modifier.*/
 		col = 0;
 		row++;
 	}
 	/*for (int i = 0; i < board[ROW]; i++){
-		//printf("[");
-		for (int j = 0; j < board[COL]; j++){
 			if (game_check_at(j,i) != INT_MIN){
 				printf("ID FOUND %d at index %d\n", game_check_at(j,i), convert_1d(j,i));
 			}
 		}
-	//	printf("]\n");
 	}*/
-	//printf("]\n");
-	//initscr();
 	start_color();
 	init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
 	init_pair(RED_WIN, COLOR_WHITE, COLOR_RED);
@@ -200,7 +185,6 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	noecho();
 	nodelay(stdscr, 1);
 	curs_set(0);
-	//printf("starting display\n");
 	display_update(1);
 }
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
@@ -209,7 +193,6 @@ void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	board[convert_1d(n_x, n_y)] = id;
 	target->vars[SOL_X] = n_x;
 	target->vars[SOL_Y] = n_y;
-	//fprintf(stderr, "moved from X:%d Y:%d to X:%d Y:%d\n", p_x, p_y, n_x, n_y);
 }
 int check_try(Soldier* user, int x_change, int y_change){
 	int team = user->vars[SOL_ID] > 0;
@@ -230,7 +213,8 @@ void game_end(int C_PAIR){
 	display_update(1);
 	move(0,0);
 	attron(COLOR_PAIR(C_PAIR));
-	for (int i = 0; i < board[ROW] * board[COL]; i++){
+	int i = 0;
+	for (i = 0; i < board[ROW] * board[COL]; i++){
 		usleep(5000000 / (board[COL] * board[ROW]));
 		printw(" ");
 		refresh();
@@ -249,12 +233,13 @@ void game_end(int C_PAIR){
 	exit(0);
 }
 int game_secure(Soldier* user, int dir){
-	// 1 FOR RED, 0 FOR BLUE.
+	/* 1 FOR RED, 0 FOR BLUE.*/
 	char user_team = (user->vars[SOL_ID] > 0);
 	int x = user->vars[SOL_X];
 	int y = user->vars[SOL_Y];
 	int results = 0;
-	for (int i = 0; i < user->vars[SOL_STAT] + 1; i++){
+	int i = 0;
+	for (i = 0; i < user->vars[SOL_STAT] + 1; i++){
 		y += (dir == 2) - (dir == 0);
 		if (y > board[ROW] || y < 0){
 			return 1;
@@ -273,7 +258,7 @@ int game_secure(Soldier* user, int dir){
 	return 1;
 }
 void attack_try(Soldier* user, int dir, int distance){
-	//fprintf(stderr, "attack attempt\n");
+	/*fprintf(stderr, "attack attempt\n");*/
 	int results = 0;
 	int x = user->vars[SOL_X];
 	int y = user->vars[SOL_Y];
@@ -305,7 +290,6 @@ void attack_try(Soldier* user, int dir, int distance){
 		blue_team[-(results+1)].curr = -2;
 		blue_ct--;
 	}
-	//fprintf(stderr, "blue count: %d, red count: %d\n", blue_ct, red_ct);
 	if (red_ct == 0){
 			game_end(BLUE_WIN);
 	}
@@ -317,16 +301,15 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 	int x = soldier->vars[SOL_X];
 	int y = soldier->vars[SOL_Y];
 	int length = 0;
-	// 0 for blue, 1 for red
+	/* 0 for blue, 1 for red*/
 	int team = soldier->vars[SOL_ID] > 0;
 	int result = 0;
-	// THIS SHOULD BE GRANTED TO RETURN, AND NOT RUN AFTER A TEAM DIES.
+	/* THIS SHOULD BE GRANTED TO RETURN, AND NOT RUN AFTER A TEAM DIES.*/
 	while (length < 6){
-		// DONE DIAGONALS.
-		// ADD ONE TO X TO ACESS NEXT DIAGONAL.
+		/* ADD ONE TO X TO ACESS NEXT DIAGONAL.*/
 		x++;
 		length++;
-		//DOWN LEFT
+		/*DOWN LEFT*/
 		if (!(x >= board[COL] || y >= board[ROW] || x < 0 || y < 0)){
 			result = game_check_at(x,y);
 		}
@@ -336,7 +319,8 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 			soldier->vars[TMP_RET] = 1;
 			return;
 		}
-		for (int i = 0; i < length; i++){
+		int i = 0;
+		for (i = 0; i < length; i++){
 			x--;
 			y--;
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
@@ -350,8 +334,8 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				return;
 			}
 		}
-		// UP LEFT
-		for (int i = 0; i < length; i++){
+		/* UP LEFT*/
+		for (i = 0; i < length; i++){
 			x--;
 			y++;
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
@@ -365,8 +349,8 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				return;
 			}
 		}
-		// UP RIGHT
-		for (int i = 0; i < length; i++){
+		/* UP RIGHT */
+		for (i = 0; i < length; i++){
 			x++;
 			y++;
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
@@ -380,8 +364,8 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				return;
 			}
 		}
-		//DOWN RIGHT
-		for (int i = 0; i < length; i++){
+		/*DOWN RIGHT*/
+		for (i = 0; i < length; i++){
 			x++;
 			y--;
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
@@ -401,29 +385,25 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 	soldier->vars[TMP_RET] = 0;
 }
 int move_try(Soldier* soldier, int x_change, int y_change){
-	//fprintf(stderr, "%d %d %d %d max check !! \n", soldier->vars[SOL_X] + x_change, board[COL], soldier->vars[SOL_Y] + y_change, board[ROW]);
 	if (soldier->vars[SOL_X] + x_change >= board[COL] || soldier->vars[SOL_Y] + y_change >= board[ROW]){
-		//fprintf(stderr, "move try failed, out of bounds (+)\n");
 		return 1;
 	}
 	if (soldier->vars[SOL_X] + x_change < 0 || soldier->vars[SOL_Y] + y_change < 0){
-		//fprintf(stderr, "move try failed, out of bounds (-)\n");
 		return 1;
 	}
 	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change); 
 	if (results != INT_MIN && results != 0){
-		//fprintf(stderr, "move try failed, space occupied\n");
 		return 1;
 	}
 	game_move_to(soldier->vars[SOL_X], soldier->vars[SOL_Y], soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change, soldier);
 	return 0;
 }
 void game_step() {
-	for (int j = 0; j < base_ct; j++){
+	int j = 0;
+	for (j = 0; j < base_ct; j++){
 		RUN(&red_team[j]);
 		RUN(&blue_team[j]);
 	}
-	//display_update();
 }
 
 int key_code = 0;

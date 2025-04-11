@@ -18,21 +18,15 @@ void CMP(Soldier* soldier, void* args){
 	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	int ret = 0;
-	//	printf("comparison: %d %d\n", numa, numb);
-	//printf("results: %d %d %d\n",convert->comparison & EQUAL, convert->comparison & SMALLER, convert->comparison & BIGGER);	
 	if ((convert->comparison & EQUAL) > 0){
-		//printf("equality check\n");
 		ret = numa==numb;
 	}
 	if (ret == 0 && (convert->comparison & SMALLER) > 0){
-		//printf("lesser check\n");
 		ret = numa<numb;
 	}
 	if (ret == 0 && (convert->comparison & BIGGER) > 0){
-		//fprintf(stderr, "greater check\n");
 		ret = numa>numb;
 	}
-	//printf("comparison result: %d\n", ret);
 	soldier->vars[TMP_RET] = ret;
 }
 void JMP(Soldier* soldier, void* args){
@@ -46,9 +40,7 @@ void CON_JMP(Soldier* soldier, void* args){
 void SOL_ATK(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
 	int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
-	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
-	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	attack_try(soldier, move_dir, soldier->vars[SOL_STAT] + 1);
 	soldier->vars[SOL_STAT] = 0;
 }
@@ -56,20 +48,16 @@ void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
 	int x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
 	int y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
-	// same team returns 1, empty returns 0, diff team returns -1, returns -2 if out of bounds. 
+	/* same team returns 1, empty returns 0, diff team returns -1, returns -2 if out of bounds.*/ 
 	soldier->vars[TMP_RET] = check_try(soldier, x, y);
-	//fprintf(stderr, "CHECK RETURNED %d\n", soldier->vars[TMP_RET]);
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
 		int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
-	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	move_dir = move_dir % 4;
-	//fprintf(stderr, "movedir is: %d\n", move_dir);
 	char moveY = (move_dir == 2) - (move_dir == 0);
 	char moveX = (move_dir == 1) - (move_dir == 3);
-	//fprintf(stderr, "move try by %d X, %d Y\n", moveX, moveY);
-	//returns 1 if successful, 0 if not.
+	/*returns 1 if successful, 0 if not.*/
 	soldier->vars[TMP_RET] = move_try(soldier, moveX, moveY); 
 }
 void RAND(Soldier* soldier, void* args){
@@ -81,7 +69,6 @@ void RAND(Soldier* soldier, void* args){
 		return;
 	}
 	soldier->vars[TMP_RET] = min + (rand() % (max-min));
-	//printf("min %d, max %d generated %d \n", min, max, soldier->vars[TMP_RET]);
 }
 void ADD(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
@@ -155,9 +142,6 @@ int strcmp_wrap(void* a, void* b){
 }
 unsigned char check_keywords(char* buff){
 	int i = 0;
-	//while (buff[i] == ' ' || buff[i] == '	'){
-	//	i++;
-	//}
 	if (strcmp("MOVE", buff + i) == 0){
 		return SOL_MOVE_IND;
 	} else if (strcmp("SEEK", buff + i) == 0){
@@ -188,7 +172,7 @@ char is_math(char* str){
 char is_comparator(char* str){
 	return str[0] == '=' && (str[1] == '=' || str[1] == '>' || str[1] == '<');	
 }
-// starts after the function name i.e. "RAND 0 1", should receive "0 1"
+/* starts after the function name i.e. "RAND 0 1", should receive "0 1"*/
 void fn_tok(char* start, char*** tokens, unsigned char* tok_ct){
 	unsigned int curr = 0;
 	unsigned int prev = 0;
@@ -199,7 +183,6 @@ void fn_tok(char* start, char*** tokens, unsigned char* tok_ct){
 		prev = curr;
 		while ((start[curr] == '=' || start[curr] == '>' || start[curr] == '<') && start[curr] != '\0' && start[curr] != '\n'){
 			curr++;
-			//printf("fntok entered lloop symbol\n");
 		}
 		if (curr != prev){
 			tokens[0][*tok_ct] = malloc(sizeof(char) * (curr-prev+1));
@@ -209,11 +192,9 @@ void fn_tok(char* start, char*** tokens, unsigned char* tok_ct){
 		}
 		prev = curr;
 		while (start[curr] != ' ' && start[curr] != '	' && start[curr] != '=' && start[curr] != '>' && start[curr] != '<' && start[curr] != '\0' && start[curr] != '\n'){
-			//printf("fntok entered char symbol\n");
 			curr++;
 		}
 		if (curr != prev){
-			//printf("fntok created token\n");
 			tokens[0][*tok_ct] = malloc(sizeof(char) * (curr-prev+1));
 			memcpy(tokens[0][*tok_ct], start+prev, curr-prev);
 			tokens[0][*tok_ct][curr-prev] = '\0';
@@ -242,7 +223,6 @@ char** tokenize(char* raw, unsigned char* token_count){
 				tokens[*token_count][0] = raw[curr];
 				tokens[*token_count][1] = raw[curr+1];
 				tokens[*token_count][2] = '\0';
-				//printf("token made\n");
 				token_count[0]++;
 				if (token_count[0] == max_token){
 					fprintf(stderr, "TOO MANY TOKENS!\n");
@@ -254,14 +234,12 @@ char** tokenize(char* raw, unsigned char* token_count){
 			tokens[*token_count][0] = raw[curr];
 			tokens[*token_count][1] = '\0';
 			token_count[0]++;
-			//printf("token made\n");
 				if (token_count[0] == max_token){
 					fprintf(stderr, "TOO MANY TOKENS!\n");
 					exit(0);
 				}
 			}
 			curr++;
-			//printf("aa");
 		} else if(is_math(raw+curr)){
 			if (last_sym == 1){
 				if (raw[curr] != '-' && raw[curr] != '+'){
@@ -295,7 +273,6 @@ char** tokenize(char* raw, unsigned char* token_count){
 					fprintf(stderr, "TOO MANY TOKENS!\n");
 					exit(0);
 				}
-				//printf("token made\n");
 				curr++;
 				prev = curr;
 			}
@@ -313,7 +290,6 @@ char** tokenize(char* raw, unsigned char* token_count){
 					fprintf(stderr, "TOO MANY TOKENS!\n");
 					exit(0);
 			}
-//printf("token made\n");
 		} else if (raw[curr] != '\n' && raw[curr] != ' ' && raw[curr] != '	'){
 			prev = curr;
 			last_sym = 0;
@@ -329,7 +305,6 @@ char** tokenize(char* raw, unsigned char* token_count){
 			tokens[*token_count][curr-prev] = '\0';
 			token_count[0]++;
 			if (check_keywords(tokens[(*token_count)-1]) != NO_KEYWORD){
-				//printf("called fn_tok\n");
 				fn_tok(&raw[curr],&tokens,token_count);
 				return tokens;
 			}
@@ -337,7 +312,6 @@ char** tokenize(char* raw, unsigned char* token_count){
 				fprintf(stderr, "TOO MANY TOKENS!\n");
 				exit(0);
 			}
-//printf("token made\n");
 		} else {
 			curr++;
 		}
@@ -388,7 +362,6 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 	} else if (tokens[curr_i][0] == '<'){
 		mode = mode | SMALLER;
 	}
-	//printf("mode %d \n", mode);
 	if (tokens[curr_i][1] != '\0'){
 		if (tokens[curr_i][1] == '='){
 			mode = mode | EQUAL;
@@ -398,10 +371,7 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 			mode = mode | SMALLER;
 		}
 	}
-	//fprintf(stderr, "mode: %d\n", mode);
 	curr_i++;
-//printf("mode %d \n", mode);
-	//printf("cmp comparison done.\n");
 	((CMP_ARGS*)cmp.args)->comparison = mode;
   ((CMP_ARGS*)cmp.args)->arg2 = convert_arg(tokens[curr_i], &md, var_mp);
 	((CMP_ARGS*)cmp.args)->arg2_mode = md;
@@ -499,7 +469,8 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	unsigned char num_i = 0;
 	char* prev_sym = NULL;
 	int* var = NULL;
-	for (int i = 0; i < token_length; i++){
+	int i = 0;
+	for (i = 0; i < token_length; i++){
 		if (is_math(tokens[i]) && tokens[i][1] == '\0'){
 			if (prev_sym != NULL){
 				num_stack[num_i] = prev_sym;
@@ -521,7 +492,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 		exit(0);
 	}
 	TWO_ARGS* args;
-	int i = 0;
+	i = 0;
 	while (i < num_i){
 		while (is_math(num_stack[i]) == 0 || num_stack[i][1] != '\0') i++;
 	 	if (num_stack[i][0] == '*') {
@@ -536,10 +507,8 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 			emul->instructions[emul->instruction_total] = (Instruction) {NULL, MOD_IND};
 	 	}
 		args = malloc(sizeof(TWO_ARGS));
-		//printf("equaltion! %d \n", i);
 		if (i < 3){
 			if (!(num_stack[i-2][0] < '0' || num_stack[i-2][0] > '9') || num_stack[i-2][0] == '-' || num_stack[i-2][0] == '+'){
-				//printf("numa\n");
 				args->arg1_mode = RAW_DATA;
 				args->arg1 = strtoimax(num_stack[i-2], NULL, 10);
 			} else if ((var = (int*)getValue(var_map, num_stack[i-2])) != NULL){
@@ -584,7 +553,6 @@ void build_check(HashMap* var_mp, Soldier* emul, char** tokens){
 	Instruction check = (Instruction) {NULL, CHECK_IND};
 	check.args = malloc(sizeof(TWO_ARGS));
 	char md = 0;
-	//printf("aaa\n");
 	((TWO_ARGS*)check.args)->arg1 = convert_arg(tokens[1], &md, var_mp);
 	((TWO_ARGS*)check.args)->arg1_mode = md;
 	((TWO_ARGS*)check.args)->arg2 = convert_arg(tokens[2], &md, var_mp);
@@ -624,11 +592,10 @@ Soldier* translate(FILE* read){
 	int max_lines = 256;
 	int curr_line = 0;
 	int var_ind = 6;
-	//Instruction curr_inst = ({0};
 	int* curr_var = NULL;
 	unsigned char keyword_code = NO_KEYWORD;
 	HashMap* var_map = createMap(32, &strHash, &strcmp_wrap, &defaultFree);
-	//ADDING MAGIC MEMORY SPACES.
+	/*ADDING MAGIC MEMORY SPACES.*/
 	char* var_name = (char*) malloc(8);
 	memcpy(var_name, "TMP_RET", 8);
 	int* var_val = malloc(sizeof(int));
@@ -663,11 +630,12 @@ Soldier* translate(FILE* read){
 		line_relation[curr_line] = emul->instruction_total;
 		curr_line++;
 		line_check(curr_line, &line_relation, &max_lines);
-		// skip white space.
+		/* skip white space.*/
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
 		fprintf(stdout, "tokenized to %d tokens: \n[", tok_ct);
-		for (int j = 0; j < tok_ct; j++){
+		int j = 0;
+		for (j = 0; j < tok_ct; j++){
 			fprintf(stdout, "%s, ", tokens[j]);
 		}
 		fprintf(stdout, "]\n");
@@ -680,9 +648,8 @@ Soldier* translate(FILE* read){
 			continue;
 		}
 		if ((keyword_code = check_keywords(tokens[0])) != NO_KEYWORD){
-			//printf("keyword code = %d\n", keyword_code); 
 			if (keyword_code == CON_JMP_IND){
-				// con_jmp adds 2 instructions, always.
+				/* con_jmp adds 2 instructions, always.*/
 				if (tok_ct != 5){
 					fprintf(stderr, "at line %d, CON_GOTO has malformed args\n", curr_line);
 					exit(0);
@@ -743,26 +710,20 @@ Soldier* translate(FILE* read){
 					fprintf(stderr, "at line %d MOVE has malformed arguments\n", curr_line);
 					exit(0);
 				}
-				//DONE: move builder.
 				build_move(emul, tokens, var_map);
 			} else if (keyword_code == DECLARATION){
-					//printf("var declared\n");	
-						//printf("%d \n", strlen(); 
 					char* var_name = (char*) malloc(strlen(tokens[1]) + 1);
-//printf("test\n");
 					memcpy(var_name, tokens[1], strlen(tokens[1])+1);
 					int* var_val = malloc(sizeof(int));
 					var_val[0] = var_ind;
 					addPair(var_map, var_name, var_val);
 					var_ind++;
-//printf("test\n");
 				if (tok_ct != 2){
 					fprintf(stderr, "at line %d, invalid variable declaration\n", curr_line);
 					exit(0);
 				}
 			}
 		} else if ((curr_var = getValue(var_map, tokens[i])) != NULL){
-			//printf("variable match\n");
 			if (strcmp(tokens[1], "=")){
 						printf("INVALID SYMBOL OR KEYWORD INSTEAD OF EQUAL SYMBOL AT LINE %d \n", curr_line);
 						exit(0);
@@ -787,7 +748,6 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case CHECK_IND:
-							//DONE: IMPLEMENT CHECK
 							build_check(var_map, emul, &tokens[2]);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
@@ -880,13 +840,13 @@ Soldier* translate(FILE* read){
 			printf("COMPILE ERROR, LINE %d PRODUCED NO VALID STARTING TOKENS\n", curr_line);
 			exit(0);
 		}
-		for (int j = 0; j < tok_ct; j++){
+		for (j = 0; j < tok_ct; j++){
 			free(tokens[j]);
 		}
 		free(tokens);
 	}
 	fprintf(stdout, "compiled to %d instructions: \n", emul->instruction_total);
-	for (int i = 0; i < emul->instruction_total; i++){
+	for (i = 0; i < emul->instruction_total; i++){
 		if (emul->instructions[i].instruction_id == JMP_IND || emul->instructions[i].instruction_id == CON_JMP_IND){
 			if (((ONE_ARG*)emul->instructions[i].args)->arg >= curr_line){
 				fprintf(stderr, "GOTO OR CON_GOTO linking to non-existant line\n");
@@ -896,16 +856,15 @@ Soldier* translate(FILE* read){
 		}
 		fprintf(stdout, "%dth - ID: %d \n", i, emul->instructions[i].instruction_id);
 	}
-	for (int i = 0; i < 32; i++){
+	for (i = 0; i < 32; i++){
 		emul->vars[i] = 0;
 	}
 	emul->curr = -1;
 	discardMap(var_map);
-	//fclose(read);
 	return emul;
 }
 void RUN(Soldier* soldier){
-	//is dead check, and if the script ended.
+	/*is dead check*/
 	if (soldier->curr < -1){
 		return;
 	}
@@ -913,12 +872,5 @@ void RUN(Soldier* soldier){
  if (soldier->curr == soldier->instruction_total){
 		soldier->curr = 0;
 	}
-	//printf("running instruction number %d\n", soldier->curr);
 	instructions[soldier->instructions[soldier->curr].instruction_id](soldier, soldier->instructions[soldier->curr].args);	
-	//printf("variable state: \n[");
-	//for (int i = 0; i < 32; i++){
-	//printf("%d, ", soldier->vars[i]);
-	//}
-	//printf("]\n");
-	//printf("%d %d comparisons\n", EQUAL | BIGGER, EQUAL | SMALLER);
 }

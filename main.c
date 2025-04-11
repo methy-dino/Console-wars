@@ -32,7 +32,6 @@ int main(int argC, char** args){
 	fclose(code);
 	dir->length = len;
 	dir->string[len] = '\0';
-	//fprintf(stderr, "bef %s", dir->string);
 	appendNoLen(dir, args[3], 128);
 	dir->string[dir->length] = '\0';
 	fprintf(stdout, "blue team code file = \"%s\"\n", dir->string);
