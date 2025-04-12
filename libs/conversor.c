@@ -737,6 +737,10 @@ Soldier* translate(FILE* read){
 					inst_check(emul->instruction_total+1, &(emul->instructions), &max_inst);
 					switch (keyword_code){
 						case RAND_IND:
+							if (tok_ct != 5){
+								fprintf(stderr, "at line %d RAND has malformed arguments\n", curr_line);
+								exit(0);
+							}
 							build_rand(var_map, emul, &tokens[2]);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args = malloc(sizeof(TWO_ARGS));
@@ -748,6 +752,10 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case CHECK_IND:
+							if (tok_ct != 5){
+								fprintf(stderr, "at line %d CHECK has malformed arguments\n", curr_line);
+								exit(0);
+							}
 							build_check(var_map, emul, &tokens[2]);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
@@ -759,6 +767,10 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case SOL_MOVE_IND:
+							if (tok_ct != 4){
+								fprintf(stderr, "at line %d MOVE has malformed arguments\n", curr_line);
+								exit(0);
+							}
 							build_move(emul, &tokens[2], var_map);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
@@ -770,6 +782,10 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case SEEK_IND:
+							if (tok_ct != 5){
+								fprintf(stderr, "at line %d SEEK has malformed arguments\n", curr_line);
+								exit(0);
+							}
 							build_seek(emul, &tokens[2], var_map);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
@@ -781,6 +797,10 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case CHARGE_IND:
+							if (tok_ct != 3){
+								fprintf(stderr, "at line %d CHARGE is malformed\n", curr_line);
+								exit(0);
+							}
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, CHARGE_IND};
 							emul->instruction_total++;
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
@@ -793,6 +813,10 @@ Soldier* translate(FILE* read){
 							emul->instruction_total++;
 							break;
 						case SECURE_IND:
+							if (tok_ct != 3){
+								fprintf(stderr, "at line %d SECURE is malformed\n", curr_line);
+								exit(0);
+							}
 							build_secure(emul, &tokens[2], var_map);
 							emul->instructions[emul->instruction_total] = (Instruction) {NULL, MEM_CP_IND};
 							args= malloc(sizeof(TWO_ARGS));
