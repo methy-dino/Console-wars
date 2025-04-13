@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.0.0)
-project(C-wars VERSION 0.1.2)
+project(C-wars VERSION 0.1.3)
 find_package(Curses REQUIRED)
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 include_directories(${CURSES_INCLUDE_DIR})
