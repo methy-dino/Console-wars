@@ -5,7 +5,16 @@
 #include "libs/conversor.h"
 #include "libs/gameRules.h"
 #include "libs/string.h"
+#include <string.h>
 int main(int argC, char** args){
+	if (argC > 1 && strcmp(args[1], "help") == 0){
+		int n = 0;
+		if (argC == 2) print_help(NULL);
+		for (n = 1; n < argC; n++){
+			print_help(args[n]);
+		}
+		exit(0);
+	}
 	if (argC != 4){
 		printf("invalid argument count");
 		return 0;

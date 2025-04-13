@@ -94,19 +94,19 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	initscr();
 
 	if (COLS < 5){
-		printf("width of terminal is lower than 20, which is the minimum width\n");
+		printf("width of terminal is lower than 20, which is the minimum width.\n");
 		exit(0);
 	}
 	if (COLS > 200){
-		printf("width of terminal is higher than 200, which is the maximum width\n");
+		printf("width of terminal is higher than 200, which is the maximum width.\n");
 		exit(0);
 	}
 	if (LINES < 5){
-		printf("height of terminal is lower than 20, which is the minimum height\n");
+		printf("height of terminal is lower than 20, which is the minimum height.\n");
 		exit(0);
 	}
 	if (LINES > 200){
-		printf("height of terminal is higher than 200, which is the maximum height\n");
+		printf("height of terminal is higher than 200, which is the maximum height.\n");
 		exit(0);
 	}
 	board = malloc((COLS * LINES + 2) * sizeof(int));
@@ -439,3 +439,63 @@ void game_loop(){
 		display_update(0);
 	}
 }
+
+void print_help(char* arg){
+	if (arg == NULL){
+		printf("no soldier command specified, use one of those as arguments:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
+		return;
+	}
+	if (strcmp(arg, "GUIDE") == 0){
+		printf("- - - - GUIDE - - - -\nthis is a guide on how to read the instruction syntax, which is composed by 3 params, the first is <return>, which indicates if it writes it's result to any variable space, the second is NAME, which is the name of the instruction, and the third is it's arguments and it's possible states (i.e. similar to \"(VAR/CONST arg1, arg2)\", var meaning a variable, and const a numerical constant).\n");
+	return;
+	}
+	if (strcmp(arg, "ATTACK") == 0){
+		printf("- - - - ATTACK - - - -\n-> <NULL> ATTACK (VAR/CONST direction)\nasks for the soldier to attack in direction, having a range of SOL_STAT + 1, setting SOL_STAT to 0.\n");
+		return;
+	}
+	if (strcmp(arg, "CHARGE") == 0){
+		printf("- - - - CHARGE - - - -\n-> <NULL> CHARGE ()\nincreases the SOL_STAT variable by 1, effectively increasing the range of the next attack.\n");
+		return;
+	}
+	if (strcmp(arg, "CHECK") == 0){
+			printf("- - - - CHECK - - - -\n-> <TMP_RET> CHECK (VAR/CONST relative_x, VAR/CONST relative_y)\nsets TMP_RET to -2 if the targetted spot is out of bounds, -1 if it's occupied by an enemy, or 1 if it's occupied by an ally.\n");
+		return;
+	}
+	if (strcmp(arg, "CON_GOTO") == 0){
+		printf("- - - - CON_GOTO - - - -\n-> <TMP_RET> CON_GOTO (CONST line, COMPARISON)\nsets TMP_RET to the result of the comparison, and goes to the targetted line if the comparison is true.\n");
+		return;
+	}
+	if (strcmp(arg, "GOTO") == 0){
+		printf("- - - - GOTO - - - -\n-> <NULL> GOTO (CONST line)\njumps to the targeted line.\n");
+		return;
+	}
+	if (strcmp(arg, "LET") == 0){
+		printf("- - - - LET - - - -\n-> <NULL> LET (CONST STRING name)\ndeclares a variable, which can be used in place of VAR arguments.\n");
+		return;
+	}
+	if (strcmp(arg, "MATH") == 0){
+		printf("- - - - MATH - - - -\n-> <TMP_MATH> NO_NAME (MATH EQUATION)\nrequires an assigment to a variable, sets the variable and TMP_MATH to the result of the equation, is calculated strictly in the order the symbols appear, can not have functions in it's body.\n");
+		return;
+	}
+	if (strcmp(arg, "MOVE") == 0){
+			printf("- - - - MOVE - - - -\n-> <TMP_RET> MOVE (VAR/CONST direction)\nattempts to move the soldier in the direction specified, can be assigned to a variable, return 1 if successful, and 0 if not.\n");
+	return;
+	}
+if (strcmp(arg, "PREDEFINED") == 0){
+			printf("- - - - PREDEFINED VARIABLES - - - -\nthere are some predefined variables at compilation time, which are separated in soldier-specific and game specific\n- - SOLDIER SPECIFIC VARS - -\nTMP_RET, address used for returns, read-only\nTMP_MATH address used to write math results\nSOL_X represents the soldier's X coordinate, read-only\nSOL_Y represents the soldier's Y coordinate\nSOL_STAT, represent's the ammount of \'charge\' a soldier has, read-only\nSOL_ID represents the ID number of the soldier, in the red team it is positive, in the blue team it is negative, will never be zero, read only\n- - GAME SPECIFIC VARS - -\nWORLD_W, specifies the map width.\nWORLD_H specifies the map height.\nSOL_CT, specifies the quantity of soldiers per team.\n");
+	return;
+	}
+	if (strcmp(arg, "RAND") == 0){
+			printf("- - - - RAND - - - -\n-> <TMP_RET> RAND (VAR/CONST min, VAR/CONST max)\ngenerates a random number from min to max, writing it to TMP_RET, may be assigned to a variable.\n");
+	return;
+	}
+	if (strcmp(arg, "SECURE") == 0){
+			printf("- - - - SECURE - - - -\n-> <TMP_RET> SECURE (VAR/CONST direction)\nchecks if the attack hits an ally in direction, writing 1 to TMP_RET if not, and 0 if it does, may be assigned to a variable.\n");
+	return;
+	}
+	if (strcmp(arg, "SEEK") == 0){
+			printf("- - - - SEEK - - - -\n-> <TMP_RET> SEEK (VAR targetX, VAR/CONST targetY)\nwrites the coordinates of the closest enemy to targetX, targetY, relative to the soldier's X, and Y, also setting TMP_RET to 1, if there is no enemy in a radius of 5, sets targetX, targetY and TMP_RET to 0, can be assigned.\n");
+	return;
+	}
+}
+
