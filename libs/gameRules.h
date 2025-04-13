@@ -20,8 +20,6 @@ extern int atk_ct;
 extern Soldier* red_team;
 extern Soldier* blue_team;
 /* returns the soldier at the set coordinates.*/
-int game_check_at(int x, int y);
-int convert_1d(int x, int y);
 void display_update(char flush_c);	
 void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count);
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target);

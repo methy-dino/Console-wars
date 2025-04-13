@@ -20,12 +20,8 @@ int atk_ct;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
 /* returns the soldier at the set coordinates.*/
-int game_check_at(int x, int y){
-	return board[2+x+y*board[COL]];
-}
-int convert_1d(int x, int y){
-	return 2+x+y*board[COL];
-}
+#define game_check_at(x,y) (board[2+(x)+(y)*board[COL]]) 
+#define convert_1d(x,y) (2+(x)+(y)*board[COL])
 int pause_show = 0;
 int paused = 0;
 unsigned int timer = 0;
