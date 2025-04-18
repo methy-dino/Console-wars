@@ -717,6 +717,7 @@ Soldier* translate(FILE* read){
 					int* var_val = malloc(sizeof(int));
 					var_val[0] = var_ind;
 					addPair(var_map, var_name, var_val);
+					printf("%p, \"%s\"\n", getValue(var_map, var_name), var_name);
 					var_ind++;
 				if (tok_ct != 2){
 					fprintf(stderr, "at line %d, invalid variable declaration\n", curr_line);
