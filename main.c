@@ -20,6 +20,10 @@ int main(int argC, char** args){
 		return 0;
 	}
 	int soldiers = strtoimax(args[1], NULL, 10);
+	if (soldiers < 1){
+		printf("invalid soldier count\n");
+		return 0;
+	}
 	glob_init(soldiers);
 	fprintf(stdout, "started match with %d soldiers \n", soldiers);
 	char cwd[1024];

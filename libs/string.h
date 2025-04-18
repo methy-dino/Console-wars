@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-
 #define FORCE_BREAK 2
 typedef struct string {
 	char* string;
@@ -54,6 +53,8 @@ void replaceChar(String* str, char target, char sub);
 void replaceStr(String* str, String* target, String* sub);
 void replaceFirstStr(String* str, String* target, String* sub);
 void replaceLastStr(String* str, String* target, String* sub);
+char insertStr(String* str, String* str2, size_t index);
+char insertChar(String* str, char ch, size_t index);
 /* returns 1 if the strings are equal, otherwise returns 0.
  * does not compare after String.length, it may contain trash data after that.
  * trash data is non-zeroed and unsanitized.
