@@ -15,7 +15,56 @@ int main(int argC, char** args){
 		}
 		exit(0);
 	}
-	if (argC != 4){
+	if (argC == 1){
+		char buff[512] = {'\0'};
+		printf("please input the soldier count\n>> ");
+		scanf("%512s", buff);		
+		int soldiers = strtoimax(buff, NULL, 10);
+		if (soldiers < 1){
+			printf("invalid soldier count\n");
+			return 0;
+		}
+		glob_init(soldiers);
+		fprintf(stdout, "started match with %d soldiers \n", soldiers);
+		char cwd[1024];
+		getcwd(cwd, 1024);
+		Soldier* blue;
+		Soldier* red;
+		String* dir = ptrToStr(cwd);
+		appendPtr(dir, "/", 1);
+		size_t len = dir->length;	
+		printf("please input relative path to the red team's script\n>> ");
+		scanf("%512s", buff); 
+		appendNoLen(dir, buff, 512);
+		fprintf(stdout, "red team code file = \"%s\"\n", dir->string);
+		FILE* code = fopen(dir->string, "rb+");
+		if (code != NULL){
+			red = translate(code);
+		} else {
+			printf("FAILED TO READ RED TEAM'S SCRIPT\n");
+			return 0;
+		}
+		fclose(code);
+		dir->length = len;
+		dir->string[len] = '\0';
+		printf("please input relative path to the blue team's script\n>> ");
+		scanf("%512s", buff); 
+		appendNoLen(dir, buff, 512);
+		dir->string[dir->length] = '\0';
+		fprintf(stdout, "blue team code file = \"%s\"\n", dir->string);
+		code = fopen(dir->string, "rb+");
+		if (code != NULL) {
+			blue = translate(code);
+		} else {
+			printf("FAILED TO READ BLUE TEAM'S SCRIPT\n");
+			return 0;
+		}
+		fclose(code);
+		discardStr(dir);
+		sleep(1);
+		init_game(red, blue, soldiers);
+		game_loop();
+	} else if (argC != 4){
 		printf("invalid argument count");
 		return 0;
 	}
