@@ -441,6 +441,10 @@ void print_help(char* arg){
 		printf("no soldier command specified, use one of those as arguments:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
 		return;
 	}
+	if (strcmp(arg, "HELP") == 0){
+		printf("typing any of these will print out data about them:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
+		return;
+	}
 	if (strcmp(arg, "GUIDE") == 0){
 		printf("- - - - GUIDE - - - -\nthis is a guide on how to read the instruction syntax, which is composed by 3 params, the first is <return>, which indicates if it writes it's result to any variable space, the second is NAME, which is the name of the instruction, and the third is it's arguments and it's possible states (i.e. similar to \"(VAR/CONST arg1, arg2)\", var meaning a variable, and const a numerical constant).\n");
 	return;
