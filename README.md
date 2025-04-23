@@ -1,10 +1,10 @@
 # Console-wars (or C-wars for short)
 
+![C-wars icon](./images/icon.png)
 ## what is it?
 It's a command line game, where you control  a group of soldiers in your terminal, not in real-time, but through 'scripting', using a custom-made language, which has no name (yet!).
 
 ## how do I play?
-There isn't a stable release yet, you are free to compile this repository and play it. \
-Once compiled, it will require 3 arguments, the first, the quantity of soldiers, thesecond, the red team's script, and the third is the blue team's script.
+You have to specify the soldier quantity, the red and blue team's scripts, this can be done by calling the executable with three parameters, those being: soldier count for the first, the relative path to the red team's script and relative path to the blue team's script in this order, you can also call the executable with no parameters and follow the instructions.
 ## guide?
-there is no guide to programming soldiers yet, it will come soon though!
+you can call the executable within your console with no parameters, or with help as it's only parameter to get a guide on how to use the documentation.
