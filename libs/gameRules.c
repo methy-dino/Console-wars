@@ -90,7 +90,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	initscr();
 
 	if (COLS < 5){
-		printf("width of terminal is lower than 20, which is the minimum width.\n");
+		printf("width of terminal is lower than 5, which is the minimum width.\n");
 		exit(0);
 	}
 	if (COLS > 200){
@@ -98,7 +98,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		exit(0);
 	}
 	if (LINES < 5){
-		printf("height of terminal is lower than 20, which is the minimum height.\n");
+		printf("height of terminal is lower than 5, which is the minimum height.\n");
 		exit(0);
 	}
 	if (LINES > 200){
@@ -182,9 +182,15 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	nodelay(stdscr, 1);
 	curs_set(0);
 	display_update(1);
+	/* these won't be used further */
+	free(blue_team_snippet);
+	free(red_team_snippet);
 }
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
-	int id = board[convert_1d(p_x, p_y)];
+	int id = target->vars[SOL_ID];
+	if (id == 0 || id == INT_MIN){
+		return;
+	}
 	board[convert_1d(p_x, p_y)] = INT_MIN;
 	board[convert_1d(n_x, n_y)] = id;
 	target->vars[SOL_X] = n_x;
@@ -225,7 +231,12 @@ void game_end(int C_PAIR){
 	refresh();
 	sleep(3);
 	endwin();
+	/* grants no chars are buffered after process ends*/
 	while (getch() != ERR);
+	free(atk_tiles);
+	free(board);
+	free(red_team);
+	free(blue_team);
 	exit(0);
 }
 int game_secure(Soldier* user, int dir){
@@ -254,7 +265,6 @@ int game_secure(Soldier* user, int dir){
 	return 1;
 }
 void attack_try(Soldier* user, int dir, int distance){
-	/*fprintf(stderr, "attack attempt\n");*/
 	int results = 0;
 	int x = user->vars[SOL_X];
 	int y = user->vars[SOL_Y];
@@ -273,9 +283,9 @@ void attack_try(Soldier* user, int dir, int distance){
 		}
 		distance--;
 	}	
-	board[convert_1d(x, y)] = 0;
 	atk_tiles[atk_ct] = convert_1d(x, y);
 	atk_ct++;
+	board[convert_1d(x, y)] = 0;
 	if (results == INT_MIN || results == 0){
 		return;
 	}

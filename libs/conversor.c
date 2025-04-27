@@ -53,7 +53,7 @@ void CHECK(Soldier* soldier, void* args){
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
-		int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
 	move_dir = move_dir % 4;
 	char moveY = (move_dir == 2) - (move_dir == 0);
 	char moveX = (move_dir == 1) - (move_dir == 3);
@@ -346,7 +346,6 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 	}
 	int curr_i = 1;
 	char md = 0;
-	jmp.args = malloc(sizeof(ONE_ARG));
 	((ONE_ARG*)jmp.args)->arg_mode = RAW_DATA;
 	((ONE_ARG*)jmp.args)->arg = strtoimax(tokens[curr_i], NULL, 10);
 	curr_i++;
@@ -536,6 +535,8 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 		emul->instructions[emul->instruction_total].args = args;
 		emul->instruction_total++;
 		i++;
+		/* do not free contents, they are freed at the end of translate (l:548) */
+		free(num_stack);
 	}
 }
 void build_rand(HashMap* var_mp, Soldier* emul, char** tokens){
@@ -562,6 +563,7 @@ void build_check(HashMap* var_mp, Soldier* emul, char** tokens){
 }
 void glob_init(int sol_ct){
 	initscr();
+	/* NOT LOST, FREED LATER */
 	glob_vars = createMap(16, &strHash, &strcmp_wrap, &defaultFree);
 	char* var_name = (char*) malloc(8);
 	memcpy(var_name, "WORLD_W", 8);
@@ -894,7 +896,7 @@ void RUN(Soldier* soldier){
 		return;
 	}
 	soldier->curr++;
- if (soldier->curr == soldier->instruction_total){
+	 if (soldier->curr == soldier->instruction_total){
 		soldier->curr = 0;
 	}
 	instructions[soldier->instructions[soldier->curr].instruction_id](soldier, soldier->instructions[soldier->curr].args);	
