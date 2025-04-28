@@ -15,8 +15,6 @@ int* board = NULL;
 int red_ct = 0;
 int blue_ct = 0;
 int base_ct = 0;
-int* atk_tiles;
-int atk_ct;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
 /* returns the soldier at the set coordinates.*/
@@ -36,6 +34,7 @@ void display_update(char flush_c){
 					if (board[convert_1d(x,y)] == 0){
 						attron(COLOR_PAIR(ATK_COL));
 						printw("~");
+						board[convert_1d(x,y)] = INT_MIN;
 					} else { 
 						if (board[convert_1d(x,y)] > 0){
 							attron(COLOR_PAIR(RED_TEAM));
@@ -50,12 +49,6 @@ void display_update(char flush_c){
 			}
 		}
 		int i = 0;
-		for (i = 0; i < atk_ct; i++){
-			if (board[atk_tiles[i]] == 0){
-				board[atk_tiles[i]] = INT_MIN;
-			}
-		}
-		atk_ct = 0;
 	} else {
 		move(0,0);
 		pause_show += 17;
@@ -127,7 +120,6 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	while (side*side < soldier_count){
 		side++;
 	}
-	atk_tiles = malloc(sizeof(int) * soldier_count * 2);
 	red_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
 	blue_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
 	red_ct = soldier_count;
@@ -235,7 +227,6 @@ void game_end(int C_PAIR){
 	endwin();
 	/* grants no chars are buffered after process ends*/
 	while (getch() != ERR);
-	free(atk_tiles);
 	free(board);
 	free(red_team);
 	free(blue_team);
@@ -285,8 +276,6 @@ void attack_try(Soldier* user, int dir, int distance){
 		}
 		distance--;
 	}	
-	atk_tiles[atk_ct] = convert_1d(x, y);
-	atk_ct++;
 	board[convert_1d(x, y)] = 0;
 	if (results == INT_MIN || results == 0){
 		return;
