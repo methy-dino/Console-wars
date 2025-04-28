@@ -10,7 +10,9 @@
 #define BLUE_TEAM 3
 #define BLUE_WIN 4
 #define ATK_COL 5
-#define IS_ID(a) ((a) != INT_MIN && (a) != 0 && (a) != INT_MAX) 
+#define ARR_SIDE INT_MAX
+#define ARR_UP INT_MAX - 1
+#define IS_ID(a) ((a) > INT_MIN && (a) != 0 && (a) < INT_MAX - 1) 
 /*board of all soldiers*/
 int* board = NULL;
 int red_ct = 0;
@@ -32,21 +34,29 @@ void display_update(char flush_c){
 		for (y = 0; y < board[ROW]; y++){
 			for (x = 0; x < board[COL]; x++){
 				if (board[convert_1d(x,y)] != INT_MIN){
-					if (board[convert_1d(x,y)] == 0){
-						attron(COLOR_PAIR(ATK_COL));
-						printw("X");
-						board[convert_1d(x,y)] = INT_MIN;
-					} else if (board[convert_1d(x,y)] == INT_MAX){
-						attron(COLOR_PAIR(ATK_COL));
-						printw("·");
-						board[convert_1d(x,y)] = INT_MIN;
-					} else {
-						if (board[convert_1d(x,y)] > 0){
-							attron(COLOR_PAIR(RED_TEAM));
-						} else {
-							attron(COLOR_PAIR(BLUE_TEAM));
-						}
-						printw("#");
+					switch (board[convert_1d(x,y)]){
+						case 0:
+							board[convert_1d(x,y)] = INT_MIN;
+							attron(COLOR_PAIR(ATK_COL));
+							printw("X");
+							break;
+						case ARR_SIDE:
+							board[convert_1d(x,y)] = INT_MIN;
+							attron(COLOR_PAIR(ATK_COL));
+							printw("─");
+							break;
+						case ARR_UP:
+							board[convert_1d(x,y)] = INT_MIN;
+							attron(COLOR_PAIR(ATK_COL));
+							printw("|");
+							break;
+						default:
+							if (board[convert_1d(x,y)] > 0){
+								attron(COLOR_PAIR(RED_TEAM));
+							} else {
+								attron(COLOR_PAIR(BLUE_TEAM));
+							}
+							printw("#");
 					}
 				} else {
 					printw(" ");
@@ -263,6 +273,7 @@ void attack_try(Soldier* user, int dir, int distance){
 	int results = 0;
 	int x = user->vars[SOL_X];
 	int y = user->vars[SOL_Y];
+	int printed = ARR_SIDE - (dir == 2) - (dir == 0);
 	while (distance > 0){
 		y += (dir == 2) - (dir == 0);
 		if (y > board[ROW]-1 || y < 0){
@@ -276,7 +287,7 @@ void attack_try(Soldier* user, int dir, int distance){
 		if (IS_ID(results)){
 			break;
 		}
-		board[convert_1d(x,y)] = INT_MAX;
+		board[convert_1d(x,y)] = printed;
 		distance--;
 	}	
 	board[convert_1d(x, y)] = 0;
