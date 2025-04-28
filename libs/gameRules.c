@@ -51,7 +51,9 @@ void display_update(char flush_c){
 		}
 		int i = 0;
 		for (i = 0; i < atk_ct; i++){
-			board[atk_tiles[i]] = INT_MIN;	
+			if (board[atk_tiles[i]] == 0){
+				board[atk_tiles[i]] = INT_MIN;
+			}
 		}
 		atk_ct = 0;
 	} else {
@@ -187,7 +189,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	free(red_team_snippet);
 }
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
-	int id = target->vars[SOL_ID];
+	int id = board[convert_1d(p_x, p_y)];
 	if (id == 0 || id == INT_MIN){
 		return;
 	}
@@ -397,7 +399,7 @@ int move_try(Soldier* soldier, int x_change, int y_change){
 	if (soldier->vars[SOL_X] + x_change < 0 || soldier->vars[SOL_Y] + y_change < 0){
 		return 1;
 	}
-	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change); 
+	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change);
 	if (results != INT_MIN && results != 0){
 		return 1;
 	}
