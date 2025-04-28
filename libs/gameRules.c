@@ -10,6 +10,7 @@
 #define BLUE_TEAM 3
 #define BLUE_WIN 4
 #define ATK_COL 5
+#define IS_ID(a) ((a) != INT_MIN && (a) != 0 && (a) != INT_MAX) 
 /*board of all soldiers*/
 int* board = NULL;
 int red_ct = 0;
@@ -33,9 +34,13 @@ void display_update(char flush_c){
 				if (board[convert_1d(x,y)] != INT_MIN){
 					if (board[convert_1d(x,y)] == 0){
 						attron(COLOR_PAIR(ATK_COL));
-						printw("~");
+						printw("X");
 						board[convert_1d(x,y)] = INT_MIN;
-					} else { 
+					} else if (board[convert_1d(x,y)] == INT_MAX){
+						attron(COLOR_PAIR(ATK_COL));
+						printw("·");
+						board[convert_1d(x,y)] = INT_MIN;
+					} else {
 						if (board[convert_1d(x,y)] > 0){
 							attron(COLOR_PAIR(RED_TEAM));
 						} else {
@@ -61,7 +66,7 @@ void display_update(char flush_c){
 			}
 			int i = 0;
 			for (i = 0; i < 7; i++){
-				if (board[i+2] != INT_MIN){
+				if (board[i+2] != INT_MIN && board[i+2] != INT_MAX){
 					if (board[i+2] == 0){
 						attron(COLOR_PAIR(ATK_COL));
 						printw("~");
@@ -182,9 +187,6 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 }
 void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
 	int id = board[convert_1d(p_x, p_y)];
-	if (id == 0 || id == INT_MIN){
-		return;
-	}
 	board[convert_1d(p_x, p_y)] = INT_MIN;
 	board[convert_1d(n_x, n_y)] = id;
 	target->vars[SOL_X] = n_x;
@@ -199,7 +201,7 @@ int check_try(Soldier* user, int x_change, int y_change){
 		return -2;
 	}
 	int result = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
-	if (result == INT_MIN || result == 0){
+	if (!IS_ID(result)){
 		return 0;
 	}
 	return ((result > 0) == team) - ((result > 0) != team);
@@ -249,9 +251,9 @@ int game_secure(Soldier* user, int dir){
 			return 1;
 		}
 		results = game_check_at(x,y);
-		if (((results > 0) == user_team) && results != INT_MIN && results != 0){
+		if (((results > 0) == user_team) && IS_ID(results)){
 			return 0;
-		} else if (((results > 0) != user_team) && results != INT_MIN && results != 0) {
+		} else if (((results > 0) != user_team) && IS_ID(results)) {
 		return 1;
 		}
 	}
@@ -271,13 +273,14 @@ void attack_try(Soldier* user, int dir, int distance){
 			return;
 		}
 		results = game_check_at(x,y);
-		if (results != INT_MIN && results != 0){
+		if (IS_ID(results)){
 			break;
 		}
+		board[convert_1d(x,y)] = INT_MAX;
 		distance--;
 	}	
 	board[convert_1d(x, y)] = 0;
-	if (results == INT_MIN || results == 0){
+	if (!IS_ID(results)){
 		return;
 	}
 	if (results > 0){
@@ -310,7 +313,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 		if (!(x >= board[COL] || y >= board[ROW] || x < 0 || y < 0)){
 			result = game_check_at(x,y);
 		}
-		if (result != INT_MIN && ((result > 0) != team) && result != 0){
+		if (((result > 0) != team) && IS_ID(result)){
 			soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 			soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
 			soldier->vars[TMP_RET] = 1;
@@ -324,7 +327,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (result != INT_MIN && ((result > 0) != team) && result != 0){
+			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
 				soldier->vars[TMP_RET] = 1;
@@ -339,7 +342,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (result != INT_MIN && ((result > 0) != team) && result != 0){
+			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
 				soldier->vars[TMP_RET] = 1;
@@ -354,7 +357,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (result != INT_MIN && ((result > 0) != team) && result != 0){
+			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
 				soldier->vars[TMP_RET] = 1;
@@ -369,7 +372,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 				continue;
 			}
 			int result = game_check_at(x,y);
-			if (result != INT_MIN && ((result > 0) != team) && result != 0){
+			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
 				soldier->vars[TMP_RET] = 1;
@@ -389,7 +392,7 @@ int move_try(Soldier* soldier, int x_change, int y_change){
 		return 1;
 	}
 	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change);
-	if (results != INT_MIN && results != 0){
+	if (IS_ID(results)){
 		return 1;
 	}
 	game_move_to(soldier->vars[SOL_X], soldier->vars[SOL_Y], soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change, soldier);

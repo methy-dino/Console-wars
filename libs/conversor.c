@@ -6,6 +6,7 @@
 #include "gameRules.h"
 #include "conversor.h"
 #include <inttypes.h>
+#include <locale.h>
 HashMap* glob_vars = NULL;
 void MEM_CP(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
@@ -562,6 +563,7 @@ void build_check(HashMap* var_mp, Soldier* emul, char** tokens){
 	emul->instruction_total++;
 }
 void glob_init(int sol_ct){
+	setlocale(LC_ALL, "");
 	initscr();
 	/* NOT LOST, FREED LATER */
 	glob_vars = createMap(16, &strHash, &strcmp_wrap, &defaultFree);
