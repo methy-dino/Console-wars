@@ -3,50 +3,51 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <stdint.h>
 #define ROW 1
 #define COL 0
 #define RED_TEAM 1
 #define RED_WIN 2
 #define BLUE_TEAM 3
 #define BLUE_WIN 4
-#define ATK_COL 5
-#define ARR_SIDE INT_MAX
-#define ARR_UP INT_MAX - 1
-#define IS_ID(a) ((a) > INT_MIN && (a) != 0 && (a) < INT_MAX - 1) 
+#define ATK_COL 5 
+#define ARR_SIDE INT32_MAX
+#define ARR_UP INT32_MAX - 1
+#define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
 /*board of all soldiers*/
-int* board = NULL;
-int red_ct = 0;
-int blue_ct = 0;
-int base_ct = 0;
+int32_t* board = NULL;
+int32_t red_ct = 0;
+int32_t blue_ct = 0;
+int32_t base_ct = 0;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
 /* returns the soldier at the set coordinates.*/
 #define game_check_at(x,y) (board[2+(x)+(y)*board[COL]]) 
 #define convert_1d(x,y) (2+(x)+(y)*board[COL])
-int pause_show = 0;
-int paused = 0;
-unsigned int timer = 0;
+int32_t pause_show = 0;
+int32_t paused = 0;
+uint32_t timer = 0;
 void display_update(char flush_c){
 	if (paused == 0 || flush_c == 1){
 		move(0,0);
-		unsigned int y = 0;
-		unsigned int x = 0; 
+		uint32_t y = 0;
+		uint32_t x = 0; 
 		for (y = 0; y < board[ROW]; y++){
 			for (x = 0; x < board[COL]; x++){
-				if (board[convert_1d(x,y)] != INT_MIN){
+				if (board[convert_1d(x,y)] != INT32_MIN){
 					switch (board[convert_1d(x,y)]){
 						case 0:
-							board[convert_1d(x,y)] = INT_MIN;
+							board[convert_1d(x,y)] = INT32_MIN;
 							attron(COLOR_PAIR(ATK_COL));
 							printw("X");
 							break;
 						case ARR_SIDE:
-							board[convert_1d(x,y)] = INT_MIN;
+							board[convert_1d(x,y)] = INT32_MIN;
 							attron(COLOR_PAIR(ATK_COL));
 							printw("─");
 							break;
 						case ARR_UP:
-							board[convert_1d(x,y)] = INT_MIN;
+							board[convert_1d(x,y)] = INT32_MIN;
 							attron(COLOR_PAIR(ATK_COL));
 							printw("|");
 							break;
@@ -63,7 +64,6 @@ void display_update(char flush_c){
 				}
 			}
 		}
-		int i = 0;
 	} else {
 		move(0,0);
 		pause_show += 17;
@@ -74,9 +74,9 @@ void display_update(char flush_c){
 			if (pause_show > 2000){
 				pause_show = 0;
 			}
-			int i = 0;
+			int8_t i = 0;
 			for (i = 0; i < 7; i++){
-				if (board[i+2] != INT_MIN && board[i+2] != INT_MAX){
+			if (board[i+2] != INT32_MIN && board[i+2] != INT32_MAX){
 					if (board[i+2] == 0){
 						attron(COLOR_PAIR(ATK_COL));
 						printw("~");
@@ -96,7 +96,7 @@ void display_update(char flush_c){
 	}
 	refresh();
 }
-void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldier_count){
+void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int32_t soldier_count){
 	initscr();
 
 	if (COLS < 5){
@@ -116,16 +116,16 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		exit(0);
 	}
 	board = malloc((COLS * LINES + 2) * sizeof(int));
-	int i;
+	int32_t i;
 	for (i = 2; i < COLS * LINES + 2; i++){
-		board[i] = INT_MIN;
+		board[i] = INT32_MIN;
 	}
 	printf("COLS: %d LINES: %d\n", COLS, LINES);
 	board[COL] = COLS;
 	board[ROW] = LINES;
-/*	for (int i = 0; i < board[ROW]; i++){
+/*	for (int32_t i = 0; i < board[ROW]; i++){
 		printf("[");
-		for (int j = 0; j < board[COL]; j++){
+		for (int32_t j = 0; j < board[COL]; j++){
 			printf(" %d,", game_check_at(j,i));
 		}
 		printf("]\n");
@@ -140,7 +140,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	red_ct = soldier_count;
 	blue_ct = soldier_count;
 	base_ct = soldier_count;
-	int count_cp = soldier_count;
+	int32_t count_cp = soldier_count;
 	while (soldier_count > 0){
 		red_team[soldier_count-1] = *red_team_snippet;
 		red_team[soldier_count-1].vars[SOL_ID] = soldier_count;
@@ -149,13 +149,13 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		soldier_count--;
 	}
     count_cp--;
-	int row = 0;
-	int col = 0;
+	int32_t row = 0;
+	int32_t col = 0;
 	for (i = 0; i < side; i++){
 		if (count_cp == -1){
 			break;
 		}
-		int j = 0;
+		int32_t j = 0;
 		for (j = 0; j < side; j++){
 			/*places at upper left.*/
 			board[convert_1d(col, row)] = red_team[count_cp].vars[SOL_ID];
@@ -175,8 +175,8 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 		col = 0;
 		row++;
 	}
-	/*for (int i = 0; i < board[ROW]; i++){
-			if (game_check_at(j,i) != INT_MIN){
+	/*for (int32_t i = 0; i < board[ROW]; i++){
+			if (game_check_at(j,i) != INT32_MIN){
 				printf("ID FOUND %d at index %d\n", game_check_at(j,i), convert_1d(j,i));
 			}
 		}
@@ -195,33 +195,33 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int soldie
 	free(blue_team_snippet);
 	free(red_team_snippet);
 }
-void game_move_to(int p_x, int p_y, int n_x, int n_y, Soldier* target){
-	int id = board[convert_1d(p_x, p_y)];
-	board[convert_1d(p_x, p_y)] = INT_MIN;
+void game_move_to(int32_t p_x, int32_t p_y, int32_t n_x, int32_t n_y, Soldier* target){
+	int32_t id = board[convert_1d(p_x, p_y)];
+	board[convert_1d(p_x, p_y)] = INT32_MIN;
 	board[convert_1d(n_x, n_y)] = id;
 	target->vars[SOL_X] = n_x;
 	target->vars[SOL_Y] = n_y;
 }
-int check_try(Soldier* user, int x_change, int y_change){
-	int team = user->vars[SOL_ID] > 0;
+int32_t check_try(Soldier* user, int32_t x_change, int32_t y_change){
+	int32_t team = user->vars[SOL_ID] > 0;
 	if (user->vars[SOL_X] + x_change >= board[COL] || user->vars[SOL_Y] + y_change >= board[ROW]){
 		return -2;
 	}
 	if (user->vars[SOL_X] + x_change < 0 || user->vars[SOL_Y] + y_change < 0){
 		return -2;
 	}
-	int result = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
+	int32_t result = game_check_at(user->vars[SOL_X] + x_change, user->vars[SOL_Y] + y_change);
 	if (!IS_ID(result)){
 		return 0;
 	}
 	return ((result > 0) == team) - ((result > 0) != team);
 }
 
-void game_end(int C_PAIR){
+void game_end(int32_t C_PAIR){
 	display_update(1);
 	move(0,0);
 	attron(COLOR_PAIR(C_PAIR));
-	int i = 0;
+	int32_t i = 0;
 	for (i = 0; i < board[ROW] * board[COL]; i++){
 		usleep(5000000 / (board[COL] * board[ROW]));
 		printw(" ");
@@ -244,13 +244,13 @@ void game_end(int C_PAIR){
 	free(blue_team);
 	exit(0);
 }
-int game_secure(Soldier* user, int dir){
+int32_t game_secure(Soldier* user, int32_t dir){
 	/* 1 FOR RED, 0 FOR BLUE.*/
 	char user_team = (user->vars[SOL_ID] > 0);
-	int x = user->vars[SOL_X];
-	int y = user->vars[SOL_Y];
-	int results = 0;
-	int i = 0;
+	int32_t x = user->vars[SOL_X];
+	int32_t y = user->vars[SOL_Y];
+	int32_t results = 0;
+	int32_t i = 0;
 	for (i = 0; i < user->vars[SOL_STAT] + 1; i++){
 		y += (dir == 2) - (dir == 0);
 		if (y > board[ROW] || y < 0){
@@ -269,11 +269,11 @@ int game_secure(Soldier* user, int dir){
 	}
 	return 1;
 }
-void attack_try(Soldier* user, int dir, int distance){
-	int results = 0;
-	int x = user->vars[SOL_X];
-	int y = user->vars[SOL_Y];
-	int printed = ARR_SIDE - (dir == 2) - (dir == 0);
+void attack_try(Soldier* user, int32_t dir, int32_t distance){
+	int32_t results = 0;
+	int32_t x = user->vars[SOL_X];
+	int32_t y = user->vars[SOL_Y];
+	int32_t printed = ARR_SIDE - (dir == 2) - (dir == 0);
 	while (distance > 0){
 		y += (dir == 2) - (dir == 0);
 		if (y > board[ROW]-1 || y < 0){
@@ -308,13 +308,13 @@ void attack_try(Soldier* user, int dir, int distance){
 			game_end(RED_WIN);
 	}
 }
-void seek_try(Soldier* soldier, int ptrX, int ptrY){
-	int x = soldier->vars[SOL_X];
-	int y = soldier->vars[SOL_Y];
-	int length = 0;
+void seek_try(Soldier* soldier, int32_t ptrX, int32_t ptrY){
+	int32_t x = soldier->vars[SOL_X];
+	int32_t y = soldier->vars[SOL_Y];
+	int32_t length = 0;
 	/* 0 for blue, 1 for red*/
-	int team = soldier->vars[SOL_ID] > 0;
-	int result = 0;
+	int32_t team = soldier->vars[SOL_ID] > 0;
+	int32_t result = 0;
 	/* THIS SHOULD BE GRANTED TO RETURN, AND NOT RUN AFTER A TEAM DIES.*/
 	while (length < 6){
 		/* ADD ONE TO X TO ACESS NEXT DIAGONAL.*/
@@ -330,14 +330,14 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 			soldier->vars[TMP_RET] = 1;
 			return;
 		}
-		int i = 0;
+		int32_t i = 0;
 		for (i = 0; i < length; i++){
 			x--;
 			y--;
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
 				continue;
 			}
-			int result = game_check_at(x,y);
+			int32_t result = game_check_at(x,y);
 			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
@@ -352,7 +352,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
 				continue;
 			}
-			int result = game_check_at(x,y);
+			int32_t result = game_check_at(x,y);
 			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
@@ -367,7 +367,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
 				continue;
 			}
-			int result = game_check_at(x,y);
+			int32_t result = game_check_at(x,y);
 			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
@@ -382,7 +382,7 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 			if (x >= board[COL] || y >= board[ROW] || x < 0 || y < 0){
 				continue;
 			}
-			int result = game_check_at(x,y);
+			int32_t result = game_check_at(x,y);
 			if ((result > 0) != team && IS_ID(result)){
 				soldier->vars[ptrX] = x - soldier->vars[SOL_X];
 				soldier->vars[ptrY] = y - soldier->vars[SOL_Y];
@@ -395,14 +395,14 @@ void seek_try(Soldier* soldier, int ptrX, int ptrY){
 	soldier->vars[ptrY] = 0;
 	soldier->vars[TMP_RET] = 0;
 }
-int move_try(Soldier* soldier, int x_change, int y_change){
+int32_t move_try(Soldier* soldier, int32_t x_change, int32_t y_change){
 	if (soldier->vars[SOL_X] + x_change >= board[COL] || soldier->vars[SOL_Y] + y_change >= board[ROW]){
 		return 1;
 	}
 	if (soldier->vars[SOL_X] + x_change < 0 || soldier->vars[SOL_Y] + y_change < 0){
 		return 1;
 	}
-	int results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change);
+	int32_t results = game_check_at(soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change);
 	if (IS_ID(results)){
 		return 1;
 	}
@@ -410,14 +410,14 @@ int move_try(Soldier* soldier, int x_change, int y_change){
 	return 0;
 }
 void game_step() {
-	int j = 0;
+	int32_t j = 0;
 	for (j = 0; j < base_ct; j++){
 		RUN(&red_team[j]);
 		RUN(&blue_team[j]);
 	}
 }
 
-int key_code = 0;
+int32_t key_code = 0;
 void game_loop(){
 	paused = 0;
 	while(1){
@@ -457,7 +457,7 @@ void print_help(char* arg){
 		return;
 	}
 	if (strcmp(arg, "HELP") == 0){
-		printf("typing any of these will print out data about them:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
+		printf("typing any of these will print32_t out data about them:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
 		return;
 	}
 	if (strcmp(arg, "GUIDE") == 0){

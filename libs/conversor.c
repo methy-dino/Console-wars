@@ -7,18 +7,19 @@
 #include "conversor.h"
 #include <inttypes.h>
 #include <locale.h>
+#include <stdint.h>
 HashMap* glob_vars = NULL;
 void MEM_CP(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int receive = convert->arg1;
-	int send = convert->arg2;
+	int32_t receive = convert->arg1;
+	int32_t send = convert->arg2;
 	soldier->vars[receive] = convert->arg2_mode == DATA_PTR ? soldier->vars[send] : send;
 }
 void CMP(Soldier* soldier, void* args){
 	CMP_ARGS* convert = (CMP_ARGS*) args;
-	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
-	int ret = 0;
+	int32_t numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t ret = 0;
 	if ((convert->comparison & EQUAL) > 0){
 		ret = numa==numb;
 	}
@@ -40,21 +41,21 @@ void CON_JMP(Soldier* soldier, void* args){
 }
 void SOL_ATK(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
-	int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	int32_t move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
 	move_dir = move_dir % 4;
 	attack_try(soldier, move_dir, soldier->vars[SOL_STAT] + 1);
 	soldier->vars[SOL_STAT] = 0;
 }
 void CHECK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t x = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t y = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	/* same team returns 1, empty returns 0, diff team returns -1, returns -2 if out of bounds.*/ 
 	soldier->vars[TMP_RET] = check_try(soldier, x, y);
 }
 void SOL_MOVE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
-	int move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	int32_t move_dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
 	move_dir = move_dir % 4;
 	char moveY = (move_dir == 2) - (move_dir == 0);
 	char moveX = (move_dir == 1) - (move_dir == 3);
@@ -63,8 +64,8 @@ void SOL_MOVE(Soldier* soldier, void* args){
 }
 void RAND(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int min = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int max = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t min = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t max = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	if (max < min){
 		soldier->vars[TMP_RET] = 0;
 		return;
@@ -73,38 +74,38 @@ void RAND(Soldier* soldier, void* args){
 }
 void ADD(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	soldier->vars[TMP_MATH] = numa+numb;
 }
 void SUB(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	soldier->vars[TMP_MATH] = numa-numb;
 }
 void MUL(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	soldier->vars[TMP_MATH] = numa*numb;
 }
 void DIV(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	soldier->vars[TMP_MATH] = numa/numb;
 }
 void MOD(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
-	int numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
+	int32_t numa = convert->arg1_mode == DATA_PTR ? soldier->vars[convert->arg1] : convert->arg1;
+	int32_t numb = convert->arg2_mode == DATA_PTR ? soldier->vars[convert->arg2] : convert->arg2;
 	soldier->vars[TMP_MATH] = numa%numb;
 }
 void SEEK(Soldier* soldier, void* args){
 	TWO_ARGS* convert = (TWO_ARGS*) args;
-	int x = convert->arg1;
-	int y = convert->arg2;
+	int32_t x = convert->arg1;
+	int32_t y = convert->arg2;
 	seek_try(soldier,x,y);
 }
 void CHARGE(Soldier* soldier, void* args){
@@ -112,7 +113,7 @@ void CHARGE(Soldier* soldier, void* args){
 }
 void SECURE(Soldier* soldier, void* args){
 	ONE_ARG* convert = (ONE_ARG*) args;
-	int dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
+	int32_t dir = convert->arg_mode == DATA_PTR ? soldier->vars[convert->arg] : convert->arg;
 	dir = dir % 4;
 	soldier->vars[TMP_RET] = game_secure(soldier, dir);
 }
@@ -135,14 +136,14 @@ void SECURE(Soldier* soldier, void* args){
 #define DECLARATION 200
 #define NO_KEYWORD 201
 void (*instructions[])(Soldier* soldier, void* args) = {&MEM_CP, &CMP, &JMP, &CON_JMP, &CHECK, &SOL_MOVE, &SOL_ATK, &RAND, &ADD, &SUB, &MUL, &DIV, &MOD, &SEEK, &CHARGE, &SECURE};
-int strcmp_wrap(void* a, void* b){
+int32_t strcmp_wrap(void* a, void* b){
 	if (a == NULL || b == NULL){
 		return 1;
 	}
 	return strcmp((void*)a,(void*)b);
 }
 unsigned char check_keywords(char* buff){
-	int i = 0;
+	int32_t i = 0;
 	if (strcmp("MOVE", buff + i) == 0){
 		return SOL_MOVE_IND;
 	} else if (strcmp("SEEK", buff + i) == 0){
@@ -175,8 +176,8 @@ char is_comparator(char* str){
 }
 /* starts after the function name i.e. "RAND 0 1", should receive "0 1"*/
 void fn_tok(char* start, char*** tokens, unsigned char* tok_ct){
-	unsigned int curr = 0;
-	unsigned int prev = 0;
+	uint32_t curr = 0;
+	uint32_t prev = 0;
 	while (start[curr] != '\0' && start[curr] != '\n'){
 		while (start[curr] == ' ' || start[curr] == '	'){
 			curr++;
@@ -204,8 +205,8 @@ void fn_tok(char* start, char*** tokens, unsigned char* tok_ct){
 	}
 }
 char** tokenize(char* raw, unsigned char* token_count){
-	unsigned int prev = 0;
-	unsigned int curr = 0;
+	uint32_t prev = 0;
+	uint32_t curr = 0;
 	while (raw[curr] == ' ' || raw[curr] == '	'){
 		curr++;
 	}
@@ -299,7 +300,7 @@ char** tokenize(char* raw, unsigned char* token_count){
 			}
 			tokens[token_count[0]] = malloc(sizeof(char)*(curr-prev+1));
 			memcpy(tokens[token_count[0]], raw + prev, curr-prev);
-			/*for (int i = prev; i < curr; i++){
+			/*for (int32_t i = prev; i < curr; i++){
 				tokens[token_count[0]][i-prev] = raw[i];
 				printf("%d ", i-prev);
 			}*/
@@ -319,7 +320,7 @@ char** tokenize(char* raw, unsigned char* token_count){
 	}
 	return tokens;
 }
-int convert_arg(char* token, char* arg_mode, HashMap* var_mp){
+int32_t convert_arg(char* token, char* arg_mode, HashMap* var_mp){
 	int* var = NULL;
 	if ((token[0] > '0'-1 && token[0] < '9'+1) || token[0] == '-' || token[0] == '+'){
 		*arg_mode = RAW_DATA;
@@ -345,7 +346,7 @@ void build_con_jmp(HashMap* var_mp,Soldier* emul, char** tokens){
 		fprintf(stderr, "CON_GOTO malformed, argument 1 is NOT A NUMBER!\n");
 		exit(0);
 	}
-	int curr_i = 1;
+	int32_t curr_i = 1;
 	char md = 0;
 	((ONE_ARG*)jmp.args)->arg_mode = RAW_DATA;
 	((ONE_ARG*)jmp.args)->arg = strtoimax(tokens[curr_i], NULL, 10);
@@ -447,7 +448,7 @@ void build_secure(Soldier* emul, char** tokens, HashMap* var_mp){
 	emul->instruction_total++;
 }
 
-void inst_check(int curr, Instruction** lines, int* max){
+void inst_check(int32_t curr, Instruction** lines, int* max){
 	if (curr < *max){
 		return;
 	}
@@ -456,7 +457,7 @@ void inst_check(int curr, Instruction** lines, int* max){
 	*max = (*max) * 2;
 	lines[0] = lines_cp;
 }
-void line_check(int curr, int** lines, int* max){
+void line_check(int32_t curr, int** lines, int* max){
 	if (curr < *max){
 		return;
 	}
@@ -469,7 +470,7 @@ void rpn_math(HashMap* var_map, Soldier* emul, char** tokens, unsigned char toke
 	unsigned char num_i = 0;
 	char* prev_sym = NULL;
 	int* var = NULL;
-	int i = 0;
+	int32_t i = 0;
 	for (i = 0; i < token_length; i++){
 		if (is_math(tokens[i]) && tokens[i][1] == '\0'){
 			if (prev_sym != NULL){
@@ -562,7 +563,7 @@ void build_check(HashMap* var_mp, Soldier* emul, char** tokens){
 	emul->instructions[emul->instruction_total] = check;
 	emul->instruction_total++;
 }
-void glob_init(int sol_ct){
+void glob_init(int32_t sol_ct){
 	setlocale(LC_ALL, "");
 	initscr();
 	/* NOT LOST, FREED LATER */
@@ -589,13 +590,13 @@ Soldier* translate(FILE* read){
 	emul->instructions = malloc(sizeof(Instruction) * 256);
 	emul->instruction_total = 0;
 	emul->curr = -1;
-	int max_inst = 256;
+	int32_t max_inst = 256;
 	char buff[1024] = {'\0'};
-	int i = 0;
+	int32_t i = 0;
 	int* line_relation = malloc(sizeof(int) * 256);
-	int max_lines = 256;
-	int curr_line = 0;
-	int var_ind = 6;
+	int32_t max_lines = 256;
+	int32_t curr_line = 0;
+	int32_t var_ind = 6;
 	int* curr_var = NULL;
 	unsigned char keyword_code = NO_KEYWORD;
 	HashMap* var_map = createMap(32, &strHash, &strcmp_wrap, &defaultFree);
@@ -638,7 +639,7 @@ Soldier* translate(FILE* read){
 		unsigned char tok_ct = 0;
 		char** tokens = tokenize(buff, &tok_ct);
 		fprintf(stdout, "tokenized to %d tokens: \n[", tok_ct);
-		int j = 0;
+		int32_t j = 0;
 		for (j = 0; j < tok_ct; j++){
 			fprintf(stdout, "%s, ", tokens[j]);
 		}
