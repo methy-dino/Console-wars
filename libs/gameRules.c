@@ -497,7 +497,7 @@ void print_help(char* arg){
 	return;
 	}
 if (strcmp(arg, "PREDEFINED") == 0){
-			printf("- - - - PREDEFINED VARIABLES - - - -\nthere are some predefined variables at compilation time, which are separated in soldier-specific and game specific\n- - SOLDIER SPECIFIC VARS - -\nTMP_RET, address used for returns, read-only\nTMP_MATH address used to write math results\nSOL_X represents the soldier's X coordinate, read-only\nSOL_Y represents the soldier's Y coordinate\nSOL_STAT, represent's the ammount of \'charge\' a soldier has, read-only\nSOL_ID represents the ID number of the soldier, in the red team it is positive, in the blue team it is negative, will never be zero, read only\n- - GAME SPECIFIC VARS - -\nWORLD_W, specifies the map width.\nWORLD_H specifies the map height.\nSOL_CT, specifies the quantity of soldiers per team.\n");
+			printf("- - - - PREDEFINED VARIABLES - - - -\nthere are some predefined variables at compilation time, which are separated in soldier-specific and game specific\n- - SOLDIER SPECIFIC VARS - -\nTMP_RET address used for returns, read-only\nTMP_MATH address used to write math results\nSOL_X represents the soldier's X coordinate, read-only\nSOL_Y represents the soldier's Y coordinate\nSOL_STAT represents the ammount of \'charge\' a soldier has, read-only\nSOL_ID represents the ID number of the soldier, in the red team it is positive, in the blue team it is negative, will never be zero, read only\n- - GAME SPECIFIC VARS - -\nWORLD_W, specifies the map width.\nWORLD_H specifies the map height.\nSOL_CT specifies the quantity of soldiers per team.\n");
 	return;
 	}
 	if (strcmp(arg, "RAND") == 0){
