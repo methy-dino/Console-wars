@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <stdint.h>
 #define ROW 1
 #define COL 0
 #define RED_TEAM 1
@@ -11,6 +10,13 @@
 #define BLUE_TEAM 3
 #define BLUE_WIN 4
 #define ATK_COL 5
+#if _POSIX_C_SOURCE >= 199309L
+#include <time.h>   /*nanosleep*/
+#elif !(_POSIX_C_SOURCE >= 200809L)
+#include <unistd.h> /*for usleep*/
+#endif
+
+void sleep_micro(long micro_sec);
 /*board of all soldiers*/
 extern int32_t* board;
 extern int32_t red_ct;

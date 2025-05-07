@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <stdint.h>
+#include <time.h>
 #define ROW 1
 #define COL 0
 #define RED_TEAM 1
@@ -14,6 +14,22 @@
 #define ARR_SIDE INT32_MAX
 #define ARR_UP INT32_MAX - 1
 #define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
+#if _POSIX_C_SOURCE >= 199309L
+#include <time.h>   /*nanosleep*/
+#elif !(_POSIX_C_SOURCE >= 200809L)
+#include <unistd.h> /*for usleep*/
+#endif
+
+void sleep_micro(long micro_sec){
+#if _POSIX_C_SOURCE >= 199309L
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = micro_sec * 1000;
+    nanosleep(&ts, NULL);
+#elif !(_POSIX_C_SOURCE >= 200809L)
+    usleep(micro_sec);
+#endif
+}
 /*board of all soldiers*/
 int32_t* board = NULL;
 int32_t red_ct = 0;
@@ -30,8 +46,8 @@ uint32_t timer = 0;
 void display_update(char flush_c){
 	if (paused == 0 || flush_c == 1){
 		move(0,0);
-		uint32_t y = 0;
-		uint32_t x = 0; 
+		int32_t y = 0;
+		int32_t x = 0; 
 		for (y = 0; y < board[ROW]; y++){
 			for (x = 0; x < board[COL]; x++){
 				if (board[convert_1d(x,y)] != INT32_MIN){
@@ -223,7 +239,7 @@ void game_end(int32_t C_PAIR){
 	attron(COLOR_PAIR(C_PAIR));
 	int32_t i = 0;
 	for (i = 0; i < board[ROW] * board[COL]; i++){
-		usleep(5000000 / (board[COL] * board[ROW]));
+		sleep_micro(5000000L / (board[COL] * board[ROW]));
 		printw(" ");
 		refresh();
 	}
@@ -421,7 +437,7 @@ int32_t key_code = 0;
 void game_loop(){
 	paused = 0;
 	while(1){
-		usleep(16666);
+		sleep_micro(16666L);
 		timer += 16666;
 		while ((key_code = getch()) != ERR){
 			switch(key_code){
@@ -443,7 +459,7 @@ void game_loop(){
 					break;
 			}
 		}
-		if (paused == 0 && timer > 16666 * 3 -1){
+		if (paused == 0 && timer > 16 * 3 -1){
 			timer = 0;
 			game_step();
 		}	

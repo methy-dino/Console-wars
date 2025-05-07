@@ -1,3 +1,5 @@
+
+#define _DEFAULT_SOURCE
 #include <ncurses.h>
 #include <stdio.h>
 #include <unistd.h>

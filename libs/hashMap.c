@@ -15,7 +15,8 @@ typedef struct node {
 	struct node* next;
 } node;
 node* b_node(void* key, void* val){
-	node* ret = malloc(sizeof(node));
+	node* ret;
+	ret = malloc(sizeof(node));
 	ret->key = key;
 	ret->value = val;
 	ret->next = NULL;
@@ -32,8 +33,9 @@ void add_handle(Entry* entry, void* key, void* val, int (*cmp)(void* a, void*b))
 					((node*)entry->key)->next = b_node(key, val);
 				}
 			} else {
-				node* curr = entry->key;
-				int result = 0;
+				node* curr;
+				int result;
+				curr = entry->key;
 				while ((result = cmp(key, curr->key)) != 0 && curr->next){
 					curr = curr->next;
 				}
@@ -59,19 +61,21 @@ typedef struct {
     size_t occupied;
 } HashMap;
 HashMap* createMap(size_t length, size_t (*hash)(void*), int(*compare)(void*,void*),void (*freefn)(void*, void*)){
-    HashMap* ret = malloc(sizeof(HashMap));
-	if (ret == NULL){
-		mapErr = MALLOC_FAIL;
-		return ret;
-	}
-    Entry* entries = malloc(sizeof(Entry) * length);
+    HashMap* ret;
+    Entry* entries;
+    size_t i;
+		ret = malloc(sizeof(HashMap));
+		if (ret == NULL){
+			mapErr = MALLOC_FAIL;
+			return ret;
+		}
+		entries = malloc(sizeof(Entry) * length);
 		if (entries == NULL){
 			mapErr = MALLOC_FAIL;
 			free(ret);
 			return NULL;
 		}
     /* sanitizing data, should be faster than calling calloc().*/
-    size_t i = 0;
 		for (i = 0; i < length; i++){
         entries[i].key = NULL;
     }
@@ -84,18 +88,20 @@ HashMap* createMap(size_t length, size_t (*hash)(void*), int(*compare)(void*,voi
     return ret;
 }
 int growMap(HashMap* map, size_t inc){
-    size_t newL = map->length+inc;
-    Entry* newE = malloc(sizeof(Entry)* newL);
+    size_t i;
+		size_t j;
+    size_t newL;
+    Entry* newE;
+		newL = map->length+inc;
+		newE = malloc(sizeof(Entry)* newL);
 		if (newE == NULL){
 			mapErr = MALLOC_FAIL;
 			return 1;
 		}
     /* sanitizing data, should be faster than calling calloc().*/
-    size_t i = 0;
 		for (i = 0; i < newL; i++){
         newE[i].key = NULL;
     }
-    size_t j = 0;
     for (i = 0; i < map->length; i++){
 			if (map->entries[i].key != NULL){
 				if (map->entries[i].value == NULL){
@@ -120,9 +126,11 @@ int growMap(HashMap* map, size_t inc){
 		return 0;
 }
 int addPair(HashMap* map, void* key, void* val){
+    size_t index; 
     /*if (map->occupied > 3 / 4 * map->length)*/
     if (4 * map->occupied > 3 * map->length-1){
-			char rep = 0;
+			unsigned char rep;
+			rep = 0;
       while (growMap(map, map->length) && rep < 3){
 				rep++;
 			}
@@ -132,13 +140,14 @@ int addPair(HashMap* map, void* key, void* val){
 				mapErr = 0;
 			}
     }
-    size_t index = map->hashf(key) % map->length;
+		index = map->hashf(key) % map->length;
 		add_handle(&map->entries[index], key, val, map->compare); 
     map->occupied++;
 		return 0;
 }
 int removeKey(HashMap* map, void* key){
-	size_t i = map->hashf(key) % map->length;
+	size_t i;
+	i = map->hashf(key) % map->length;
 	if (map->entries[i].key != NULL){
 		if (map->entries[i].value){
 			if (map->compare(key, map->entries[i].key) == 0){
@@ -150,9 +159,11 @@ int removeKey(HashMap* map, void* key){
 				return 1;
 			}
 		} else {
-			node* curr = map->entries[i].key;
-			node* prev = NULL;
-			int result = 0;
+			node* curr;
+			node* prev;
+			int result;
+			curr = map->entries[i].key;
+			prev = NULL;
 			while ((result = map->compare(key, curr->key)) != 0 && curr->next){
 				prev = curr;
 				curr = curr->next;
@@ -181,7 +192,8 @@ int removeKey(HashMap* map, void* key){
 	return 0;
 }
 void* getValue(HashMap* map, void* key){
-  size_t index = map->hashf(key) % map->length;
+  size_t index;
+	index = map->hashf(key) % map->length;
 	if (map->entries[index].key == NULL){
 		return NULL;
 	}
@@ -202,7 +214,7 @@ size_t hasKey(HashMap* map, void* key){
 	return getValue(map, key) != NULL;
 }
 void clearMap(HashMap* map){
-  size_t i = 0;  
+  size_t i;  
 	for (i = 0; i < map->length; i++){
 		if (map->entries[i].key != NULL){
 			if (map->entries[i].value == NULL){
@@ -224,7 +236,6 @@ void clearMap(HashMap* map){
 	map->occupied = 0;
 }
 void discardMap(HashMap* map){
-  size_t i = 0;
 	clearMap(map);
 	free(map->entries);
 	free(map);
@@ -237,9 +248,10 @@ size_t defHash(void* key){
 /* function to hash null terminated strings.*/
 size_t strHash(void* key){
 	size_t value;
-	size_t charSize = sizeof(char);
-	charSize = charSize * 8;
-  size_t i = 0;
+	size_t charSize;
+  size_t i;
+	i = 0;
+	charSize = sizeof(char) * 8;
 	while (((char*)key)[i] != '\0'){
 		/* the bit shift by charSize is to grant compatibility with other charset, such as UTF-16.*/ 
 		value = ((value << charSize) | ((char*)key)[i]) & 65033;
@@ -270,25 +282,25 @@ void debugPrintMap(HashMap* map, void (*printEntry)(Entry*), int verbosity){
 		printf("hashmap debug info:\n");
 	}
 	if (verbosity > 0) {
-		printf("it has %u entries, with %u pairs stored in them.\n", map->length, map->occupied);
+		printf("it has %lu entries, with %lu pairs stored in them.\n", (unsigned long) map->length, (unsigned long)map->occupied);
 	}
 	if (printEntry != NULL) {
-		printf("this is it's entry data:\n");
 		size_t i;
 		size_t decimal;
+		printf("this is it's entry data:\n");
 		for (i = 0; i < map->length; i++){
 			if (map->entries[i].key != NULL){
 				if (map->entries[i].value == NULL){
 					node* curr = map->entries[i].key;
 					decimal = 1;
 					while (curr){
-						printf("- - - - Entry %u.%u - - - -\n", i, decimal);
+						printf("- - - - Entry %lu.%lu - - - -\n", (unsigned long)i, (unsigned long)decimal);
 						printEntry((Entry*)curr);
 						curr = curr->next;
 						decimal++;
 					}
 				} else {
-					printf("- - - - Entry %u.0 - - - -\n", i);
+					printf("- - - - Entry %lu.0 - - - -\n", (unsigned long)i);
 					printEntry(&map->entries[i]);
 				}
 			} else {

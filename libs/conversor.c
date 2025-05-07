@@ -109,6 +109,7 @@ void SEEK(Soldier* soldier, void* args){
 	seek_try(soldier,x,y);
 }
 void CHARGE(Soldier* soldier, void* args){
+	(void)(args);
 	soldier->vars[SOL_STAT]++;
 }
 void SECURE(Soldier* soldier, void* args){
