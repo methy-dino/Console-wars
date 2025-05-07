@@ -16,7 +16,7 @@
 #define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
 #if _POSIX_C_SOURCE >= 199309L
 #include <time.h>   /*nanosleep*/
-#elif !(_POSIX_C_SOURCE >= 200809L)
+#else
 #include <unistd.h> /*for usleep*/
 #endif
 
@@ -459,7 +459,7 @@ void game_loop(){
 					break;
 			}
 		}
-		if (paused == 0 && timer > 16 * 3 -1){
+		if (paused == 0 && timer > 16666 * 3 -1){
 			timer = 0;
 			game_step();
 		}	

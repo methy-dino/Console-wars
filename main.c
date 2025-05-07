@@ -1,5 +1,3 @@
-
-#define _DEFAULT_SOURCE
 #include <ncurses.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -68,6 +66,9 @@ int main(int argC, char** args){
 			dir->length = len;
 			dir->string[len] = '\0';
 		}
+		dir->length = len;
+		dir->string[len] = '\0';
+
 		printf("current directory is \"%s\"\nplease input relative path to the blue team's script\n>> ", dir->string);
 		while (1){
 			scanf("%512s", buff); 
