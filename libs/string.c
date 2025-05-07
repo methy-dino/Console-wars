@@ -125,6 +125,8 @@ int appendNoLen(String* str, char* ptr, size_t max){
 	while (ptr[i] != '\0'){
 		if (str->length == str->maxCapacity){
 			if(growStr(str, (str->length+1) / 2)){
+				str-length--;
+				str->string[str->length] = '\0';
 				return 1;
 			}
 		}
@@ -132,9 +134,11 @@ int appendNoLen(String* str, char* ptr, size_t max){
 		str->length++;
 		i++;
 		if (max != 0 && i == max){
+			str->string[str->length] = '\0';
 			return FORCE_BREAK;
 		}
 	}
+	str->string[str->length] = '\0';
 	return 0;
 }
 int appendPtr(String* str, char* ptr, size_t ptrLen){
