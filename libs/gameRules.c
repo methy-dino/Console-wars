@@ -10,7 +10,7 @@
 #define RED_WIN 2
 #define BLUE_TEAM 3
 #define BLUE_WIN 4
-#define ATK_COL 5 
+#define ATK_COL 0 
 #define ARR_SIDE INT32_MAX
 #define ARR_UP INT32_MAX - 1
 #define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
@@ -35,6 +35,7 @@ int32_t* board = NULL;
 int32_t red_ct = 0;
 int32_t blue_ct = 0;
 int32_t base_ct = 0;
+uint8_t compat = 0;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
 /* returns the soldier at the set coordinates.*/
@@ -69,9 +70,20 @@ void display_update(char flush_c){
 							break;
 						default:
 							if (board[convert_1d(x,y)] > 0){
-								attron(COLOR_PAIR(RED_TEAM));
+								/* compat in case of no colors */
+								if (compat & 1){
+									/*uses bold for red */
+									attron(A_BOLD);
+								} else {
+									attron(COLOR_PAIR(RED_TEAM));
+								}
 							} else {
-								attron(COLOR_PAIR(BLUE_TEAM));
+								if (compat & 1){
+									/* uses default colors for blue */
+									attron(0);
+								} else {
+									attron(COLOR_PAIR(BLUE_TEAM));
+								}
 							}
 							printw("#");
 					}
@@ -198,11 +210,15 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int32_t so
 		}
 	}*/
 	start_color();
-	init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
-	init_pair(RED_WIN, COLOR_WHITE, COLOR_RED);
-	init_pair(BLUE_TEAM, COLOR_CYAN, COLOR_BLACK);
-	init_pair(BLUE_WIN, COLOR_WHITE, COLOR_CYAN);
-	init_pair(ATK_COL, COLOR_WHITE, COLOR_BLACK);
+	if (has_colors()){
+		init_pair(RED_TEAM, COLOR_RED, COLOR_BLACK);
+		init_pair(RED_WIN, COLOR_WHITE, COLOR_RED);
+		init_pair(BLUE_TEAM, COLOR_CYAN, COLOR_BLACK);
+		init_pair(BLUE_WIN, COLOR_WHITE, COLOR_CYAN);
+	} else {
+		/* sets first bit*/
+		compat = compat & 1;
+	}
 	noecho();
 	nodelay(stdscr, 1);
 	curs_set(0);

@@ -125,7 +125,7 @@ int appendNoLen(String* str, char* ptr, size_t max){
 	while (ptr[i] != '\0'){
 		if (str->length == str->maxCapacity){
 			if(growStr(str, (str->length+1) / 2)){
-				str-length--;
+				str->length--;
 				str->string[str->length] = '\0';
 				return 1;
 			}
