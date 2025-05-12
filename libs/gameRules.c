@@ -55,17 +55,17 @@ void display_update(char flush_c){
 					switch (board[convert_1d(x,y)]){
 						case 0:
 							board[convert_1d(x,y)] = INT32_MIN;
-							attron(COLOR_PAIR(ATK_COL));
+							attrset(COLOR_PAIR(ATK_COL));
 							printw("X");
 							break;
 						case ARR_SIDE:
 							board[convert_1d(x,y)] = INT32_MIN;
-							attron(COLOR_PAIR(ATK_COL));
+							attrset(COLOR_PAIR(ATK_COL));
 							printw("─");
 							break;
 						case ARR_UP:
 							board[convert_1d(x,y)] = INT32_MIN;
-							attron(COLOR_PAIR(ATK_COL));
+							attrset(COLOR_PAIR(ATK_COL));
 							printw("|");
 							break;
 						default:
@@ -73,16 +73,16 @@ void display_update(char flush_c){
 								/* compat in case of no colors */
 								if (compat & 1){
 									/*uses bold for red */
-									attron(A_BOLD);
+									attrset(A_BOLD);
 								} else {
-									attron(COLOR_PAIR(RED_TEAM));
+									attrset(COLOR_PAIR(RED_TEAM));
 								}
 							} else {
 								if (compat & 1){
 									/* uses default colors for blue */
-									attron(0);
+									attrset(0);
 								} else {
-									attron(COLOR_PAIR(BLUE_TEAM));
+									attrset(COLOR_PAIR(BLUE_TEAM));
 								}
 							}
 							printw("#");
@@ -96,7 +96,7 @@ void display_update(char flush_c){
 		move(0,0);
 		pause_show += 17;
 		if (pause_show < 1000){
-			attron(COLOR_PAIR(ATK_COL));
+			attrset(COLOR_PAIR(ATK_COL));
 			printw("PAUSED!");
 		} else {
 			if (pause_show > 2000){
@@ -104,17 +104,41 @@ void display_update(char flush_c){
 			}
 			int8_t i = 0;
 			for (i = 0; i < 7; i++){
-			if (board[i+2] != INT32_MIN && board[i+2] != INT32_MAX){
-					if (board[i+2] == 0){
-						attron(COLOR_PAIR(ATK_COL));
-						printw("~");
-					} else { 
-						if (board[i+2] > 0){
-							attron(COLOR_PAIR(RED_TEAM));
-						} else {
-							attron(COLOR_PAIR(BLUE_TEAM));
-						}
-						printw("#");
+				if (board[i+2] != INT_MIN){
+					switch (board[i+2]){
+						case 0:
+							board[i+2] = INT32_MIN;
+							attrset(COLOR_PAIR(ATK_COL));
+							printw("X");
+							break;
+						case ARR_SIDE:
+							board[i+2] = INT32_MIN;
+							attrset(COLOR_PAIR(ATK_COL));
+							printw("─");
+							break;
+						case ARR_UP:
+							board[i+2] = INT32_MIN;
+							attrset(COLOR_PAIR(ATK_COL));
+							printw("|");
+							break;
+						default:
+							if (board[i+2] > 0){
+								/* compat in case of no colors */
+								if (compat & 1){
+									/*uses bold for red */
+									attrset(A_BOLD);
+								} else {
+									attrset(COLOR_PAIR(RED_TEAM));
+								}
+							} else {
+								if (compat & 1){
+									/* uses default colors for blue */
+									attrset(0);
+								} else {
+									attrset(COLOR_PAIR(BLUE_TEAM));
+								}
+							}
+							printw("#");
 					}
 				} else {
 					printw(" ");
@@ -252,7 +276,7 @@ int32_t check_try(Soldier* user, int32_t x_change, int32_t y_change){
 void game_end(int32_t C_PAIR){
 	display_update(1);
 	move(0,0);
-	attron(COLOR_PAIR(C_PAIR));
+	attrset(COLOR_PAIR(C_PAIR));
 	int32_t i = 0;
 	for (i = 0; i < board[ROW] * board[COL]; i++){
 		sleep_micro(5000000L / (board[COL] * board[ROW]));
