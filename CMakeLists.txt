@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.0.0)
-project(C-wars VERSION 0.1.4)
+project(C-wars VERSION 0.1.5)
 find_package(Curses REQUIRED)
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 include_directories(${CURSES_INCLUDE_DIR})
@@ -7,5 +7,5 @@ add_executable(${PROJECT_NAME} main.c libs/string.c libs/conversor.c libs/hashMa
 target_link_libraries(C-wars ${CURSES_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL 1)
-	include(CPack)
+include(CPack)
 
