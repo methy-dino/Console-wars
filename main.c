@@ -1,6 +1,8 @@
+#define _POSIX_C_SOURCE 199309L
 #include <ncurses.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include <inttypes.h>
 #include "libs/conversor.h"
 #include "libs/gameRules.h"
@@ -15,6 +17,7 @@ int main(int argC, char** args){
 		}
 		exit(0);
 	}
+	srand(time(0));
 	if (argC == 1){
 			char buff[512] = {'\0'};
 			printf("please input the soldier count, or type \"HELP\" to acess the help interface\n>> ");

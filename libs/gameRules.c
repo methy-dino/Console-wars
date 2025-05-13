@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309L
 #include "conversor.h"
 #include <ncurses.h>
 #include <stdlib.h>
@@ -14,21 +15,13 @@
 #define ARR_SIDE INT32_MAX
 #define ARR_UP INT32_MAX - 1
 #define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
-#if _POSIX_C_SOURCE >= 199309L
 #include <time.h>   /*nanosleep*/
-#else
-#include <unistd.h> /*for usleep*/
-#endif
 
 void sleep_micro(long micro_sec){
-#if _POSIX_C_SOURCE >= 199309L
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = micro_sec * 1000;
     nanosleep(&ts, NULL);
-#elif !(_POSIX_C_SOURCE >= 200809L)
-    usleep(micro_sec);
-#endif
 }
 /*board of all soldiers*/
 int32_t* board = NULL;
