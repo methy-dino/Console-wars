@@ -480,6 +480,8 @@ void game_loop(){
 					break;
 				case 'D':
 					game_step();
+					game_step();
+					game_step();
 					display_update(1);
 					break;
 				case 'p':
