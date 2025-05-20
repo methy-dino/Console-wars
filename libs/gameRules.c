@@ -88,11 +88,11 @@ void display_update(char flush_c){
 	} else {
 		move(0,0);
 		pause_show += 17;
-		if (pause_show < 1000){
+		if (pause_show < 10000){
 			attrset(COLOR_PAIR(ATK_COL));
 			printw("PAUSED!");
 		} else {
-			if (pause_show > 2000){
+			if (pause_show > 20000){
 				pause_show = 0;
 			}
 			int8_t i = 0;
@@ -458,7 +458,7 @@ int32_t move_try(Soldier* soldier, int32_t x_change, int32_t y_change){
 	game_move_to(soldier->vars[SOL_X], soldier->vars[SOL_Y], soldier->vars[SOL_X] + x_change, soldier->vars[SOL_Y] + y_change, soldier);
 	return 0;
 }
-void game_step() {
+void game_step(){
 	int32_t j = 0;
 	for (j = 0; j < base_ct; j++){
 		RUN(&red_team[j]);
@@ -469,9 +469,10 @@ void game_step() {
 int32_t key_code = 0;
 void game_loop(){
 	paused = 0;
+	unsigned int speed_mul = 1;
 	while(1){
-		sleep_micro(16666L);
-		timer += 16666;
+		sleep_micro(1666L);
+		timer += 1666;
 		while ((key_code = getch()) != ERR){
 			switch(key_code){
 				case 'd':
@@ -487,6 +488,16 @@ void game_loop(){
 				case 'p':
 					paused = !(paused == 1);
 					break;
+				case '>':
+					if (speed_mul < 10){
+						speed_mul++;
+					}
+					break;
+				case '<':
+					if (speed_mul > 1){
+						speed_mul--;
+					}
+					break;
 				case KEY_RESIZE:
 					endwin();
 					fprintf(stderr, "terminated due to terminal resize.\n");
@@ -494,7 +505,7 @@ void game_loop(){
 					break;
 			}
 		}
-		if (paused == 0 && timer > 16666 * 3 -1){
+		if (paused == 0 && timer > 16666 * 3 / speed_mul -1){
 			timer = 0;
 			game_step();
 		}	
