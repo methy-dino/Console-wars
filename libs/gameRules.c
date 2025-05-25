@@ -16,6 +16,7 @@
 #define ARR_UP INT32_MAX - 1
 #define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
 #include <time.h>   /*nanosleep*/
+#include <signal.h>
 
 void sleep_micro(long micro_sec){
     struct timespec ts;
@@ -31,6 +32,31 @@ int32_t base_ct = 0;
 uint8_t compat = 0;
 Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
+char num[2];
+void terminate(int signal){
+	write(STDERR_FILENO, "signal ", 7);
+	num[0] = '0' + signal / 10; 
+	num[1] = '0' + signal % 10;
+	write(STDERR_FILENO, num, 2);
+	write(STDERR_FILENO, " was catched...\n", 16);
+	while (getch() != ERR){};
+	endwin();
+	if (red_team) free(red_team);
+	if (blue_team) free(blue_team);
+	if (board) free(board);
+	write(STDERR_FILENO, "exit procedure successful...\n", 29);
+	/* empty the buffer because we are good people*/
+	fflush(stderr);
+	exit(0);
+}
+struct sigaction act;
+void sig_init(){
+	memset(&act, 0, sizeof(struct sigaction));
+	act.sa_handler = &terminate;
+  sigaction(SIGTERM, &act, NULL);
+  sigaction(SIGABRT, &act, NULL);
+  sigaction(SIGINT, &act, NULL);
+}
 /* returns the soldier at the set coordinates.*/
 #define game_check_at(x,y) (board[2+(x)+(y)*board[COL]]) 
 #define convert_1d(x,y) (2+(x)+(y)*board[COL])
@@ -161,6 +187,10 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int32_t so
 		exit(0);
 	}
 	board = malloc((COLS * LINES + 2) * sizeof(int));
+	if (board == NULL){
+		fprintf(stderr, "MALLOC FAIL ― POS SYS OVERLD\n");
+		exit(0);
+	}
 	int32_t i;
 	for (i = 2; i < COLS * LINES + 2; i++){
 		board[i] = INT32_MIN;
@@ -182,6 +212,10 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int32_t so
 	}
 	red_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
 	blue_team = (Soldier*) malloc(sizeof(Soldier) * soldier_count);
+	if (red_team == NULL  || blue_team == NULL){
+		fprintf(stderr, "MALLOC FAIL ― POS SYS OVERLD\n");
+		exit(0);
+	}
 	red_ct = soldier_count;
 	blue_ct = soldier_count;
 	base_ct = soldier_count;
@@ -193,7 +227,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int32_t so
 		blue_team[soldier_count-1].vars[SOL_ID] = -soldier_count;
 		soldier_count--;
 	}
-    count_cp--;
+	count_cp--;
 	int32_t row = 0;
 	int32_t col = 0;
 	for (i = 0; i < side; i++){
@@ -243,6 +277,7 @@ void init_game(Soldier* red_team_snippet, Soldier* blue_team_snippet, int32_t so
 	/* these won't be used further */
 	free(blue_team_snippet);
 	free(red_team_snippet);
+	sig_init();
 }
 void game_move_to(int32_t p_x, int32_t p_y, int32_t n_x, int32_t n_y, Soldier* target){
 	int32_t id = board[convert_1d(p_x, p_y)];
