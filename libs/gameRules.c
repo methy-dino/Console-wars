@@ -17,9 +17,8 @@
 #define IS_ID(a) ((a) > INT32_MIN && (a) != 0 && (a) < INT32_MAX - 1) 
 #include <time.h>   /*nanosleep*/
 #include <signal.h>
-
+struct timespec ts;
 void sleep_micro(long micro_sec){
-    struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = micro_sec * 1000;
     nanosleep(&ts, NULL);
@@ -78,6 +77,7 @@ void sig_init(){
 int32_t pause_show = 0;
 int32_t paused = 0;
 uint32_t timer = 0;
+unsigned int speed_mul = 1;
 void display_update(char flush_c){
 	if (paused == 0 || flush_c == 1){
 		move(0,0);
@@ -128,7 +128,7 @@ void display_update(char flush_c){
 		}
 	} else {
 		move(0,0);
-		pause_show += 17;
+		pause_show += 17 * 10 / speed_mul;
 		if (pause_show < 10000){
 			attrset(COLOR_PAIR(ATK_COL));
 			printw("PAUSED!");
@@ -519,10 +519,9 @@ void game_step(){
 int32_t key_code = 0;
 void game_loop(){
 	paused = 0;
-	unsigned int speed_mul = 1;
 	while(1){
-		sleep_micro(1666L);
-		timer += 1666;
+		sleep_micro(1666L * 10 / speed_mul);
+		timer += 1666 * 10 / speed_mul;
 		while ((key_code = getch()) != ERR){
 			switch(key_code){
 				case 'd':
@@ -547,11 +546,6 @@ void game_loop(){
 					if (speed_mul > 1){
 						speed_mul--;
 					}
-					break;
-				case KEY_RESIZE:
-					endwin();
-					fprintf(stderr, "terminated due to terminal resize.\n");
-					exit(1);
 					break;
 			}
 		}
