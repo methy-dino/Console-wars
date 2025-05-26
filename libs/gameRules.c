@@ -34,18 +34,32 @@ Soldier* red_team = NULL;
 Soldier* blue_team = NULL;
 char num[2];
 void terminate(int signal){
-	write(STDERR_FILENO, "signal ", 7);
-	num[0] = '0' + signal / 10; 
-	num[1] = '0' + signal % 10;
-	write(STDERR_FILENO, num, 2);
-	write(STDERR_FILENO, " was catched...\n", 16);
+	/* empty the buffer because we are good people*/
 	while (getch() != ERR){};
 	endwin();
-	if (red_team) free(red_team);
-	if (blue_team) free(blue_team);
+	write(STDERR_FILENO, "signal ", 7);
+	num[0] = '0' + signal / 10; 
+	num[1] = '0' + signal % 10;	
+	write(STDERR_FILENO, num, 2);
+	if (signal == SIGWINCH){
+		write(STDERR_FILENO, " - SIGWINCH, WINDOW RESIZE -", 28); 
+	}
+	write(STDERR_FILENO, " was catched...\n", 16);
+	
+	if (red_team){
+		if (red_team[0].instructions){
+			free(red_team[0].instructions);
+		}
+		free(red_team);
+	}
+	if (blue_team){
+		if (blue_team[0].instructions){
+			free(blue_team[0].instructions);
+		}
+		free(blue_team);
+	}
 	if (board) free(board);
 	write(STDERR_FILENO, "exit procedure successful...\n", 29);
-	/* empty the buffer because we are good people*/
 	fflush(stderr);
 	exit(0);
 }
@@ -56,6 +70,7 @@ void sig_init(){
   sigaction(SIGTERM, &act, NULL);
   sigaction(SIGABRT, &act, NULL);
   sigaction(SIGINT, &act, NULL);
+	sigaction(SIGWINCH, &act, NULL);
 }
 /* returns the soldier at the set coordinates.*/
 #define game_check_at(x,y) (board[2+(x)+(y)*board[COL]]) 
