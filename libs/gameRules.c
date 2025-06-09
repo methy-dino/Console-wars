@@ -563,7 +563,7 @@ void print_help(char* arg){
 		return;
 	}
 	if (strcmp(arg, "HELP") == 0){
-		printf("typing any of these will print32_t out data about them:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
+		printf("typing any of these will print out data about them:\nATTACK\nCHARGE\nCHECK\nCON_GOTO\nGOTO\nGUIDE\nLET\nMATH\nMOVE\nPREDEFINED\nRAND\nSECURE\nSEEK\n");
 		return;
 	}
 	if (strcmp(arg, "GUIDE") == 0){
@@ -599,7 +599,7 @@ void print_help(char* arg){
 		return;
 	}
 	if (strcmp(arg, "MOVE") == 0){
-			printf("- - - - MOVE - - - -\n-> <TMP_RET> MOVE (VAR/CONST direction)\nattempts to move the soldier in the direction specified, can be assigned to a variable, return 1 if successful, and 0 if not.\n");
+			printf("- - - - MOVE - - - -\n-> <TMP_RET> MOVE (VAR/CONST direction)\nattempts to move the soldier in the direction specified, can be assigned to a variable, returns 1 if successful, and 0 otherwise.\n");
 	return;
 	}
 if (strcmp(arg, "PREDEFINED") == 0){
@@ -615,7 +615,7 @@ if (strcmp(arg, "PREDEFINED") == 0){
 	return;
 	}
 	if (strcmp(arg, "SEEK") == 0){
-			printf("- - - - SEEK - - - -\n-> <TMP_RET> SEEK (VAR targetX, VAR/CONST targetY)\nwrites the coordinates of the closest enemy to targetX, targetY, relative to the soldier's X, and Y, also setting TMP_RET to 1, if there is no enemy in a radius of 5, sets targetX, targetY and TMP_RET to 0, can be assigned.\n");
+			printf("- - - - SEEK - - - -\n-> <TMP_RET> SEEK (VAR targetX, VAR targetY)\nwrites the coordinates of the closest enemy to targetX, targetY, relative to the soldier's X, and Y, also setting TMP_RET to 1, if there is no enemy in a radius of 5, sets targetX, targetY and TMP_RET to 0, can be assigned.\n");
 	return;
 	}
 }

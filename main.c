@@ -9,10 +9,10 @@
 #include "libs/string.h"
 #include <string.h>
 int main(int argC, char** args){
-	if (argC > 1 && strcmp(args[1], "help") == 0){
+	if (argC > 1 && strcmp(args[1], "HELP") == 0){
 		int n = 0;
-		if (argC == 2) print_help(NULL);
 		for (n = 1; n < argC; n++){
+			standard_caps(args[n]);
 			print_help(args[n]);
 		}
 		exit(0);
@@ -30,7 +30,8 @@ int main(int argC, char** args){
 						printf("entering help mode, type \"QUIT\" to exit, and \"HELP\" for a guide\n>> ");
 						while (1){
 							scanf("%512s", buff);
-							if (strcmp("quit", buff) == 0){
+							standard_caps(buff);
+							if (strcmp("QUIT", buff) == 0){
 								printf("now exiting help mode...\n>> ");
 								break;
 							}
@@ -93,7 +94,7 @@ int main(int argC, char** args){
 		init_game(red, blue, soldiers);
 		game_loop();
 	} else if (argC != 4){
-		printf("invalid argument count");
+		printf("invalid argument count\n");
 		return 0;
 	}
 	int soldiers = strtoimax(args[1], NULL, 10);

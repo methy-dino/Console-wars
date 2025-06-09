@@ -11,6 +11,7 @@ typedef struct string {
 	size_t maxCapacity;
 } String;
 
+void standard_caps(char* str);
 int growStr(String* str, size_t inc);
 int growStrClean(String* str, size_t inc);
 /* creates an empty (length 0, string[0] == '\0') string with allocSize */

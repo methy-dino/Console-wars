@@ -4,6 +4,14 @@
 #include <string.h>
 #include "string.h"
 #define FORCE_BREAK 2
+void standard_caps(char* str){
+	while (*str){
+		if (*str > 'a'-1 && *str < 'z'+1){
+			*str = *str-'a'+'A';
+		}
+		str++;
+	}
+}
 int growStr(String* str, size_t inc){
 	size_t newL;
 	char* nStr; 
